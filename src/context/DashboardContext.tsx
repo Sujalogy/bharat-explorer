@@ -23,6 +23,7 @@ const initialState: DashboardState = {
     chronicPerformance: 3,
     chronicPlanning: 3
   },
+  activeTab: 'home',
   mapState: {
     currentLevel: 'national',
     selectedState: null,
@@ -30,7 +31,6 @@ const initialState: DashboardState = {
   },
   rawData: mockData,
   filteredData: mockData,
-  activeTab: 'overview',
   sidebarCollapsed: false,
   darkMode: false
 };

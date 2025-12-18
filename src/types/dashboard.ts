@@ -1,4 +1,5 @@
 export interface VisitRecord {
+  [key: string]: unknown; 
   id: string;
   academic_year: string;
   month: string;

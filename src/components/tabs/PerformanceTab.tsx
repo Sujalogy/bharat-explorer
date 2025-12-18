@@ -2,10 +2,10 @@ import { useDashboard } from '@/context/DashboardContext';
 import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
 import KPICard from '@/components/shared/KPICard';
 import ChartContainer from '@/components/shared/ChartContainer';
-import ThresholdControl from '@/components/shared/ThresholdControl';
 import DataTable, { StatusBadge, Column } from '@/components/shared/DataTable';
 import { ChronicPerformer } from '@/types/dashboard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, ReferenceLine } from 'recharts';
+import ThresholdControl from '../shared/ThresholdControl';
 
 export default function PerformanceTab() {
   const { state, dispatch } = useDashboard();
@@ -24,6 +24,9 @@ export default function PerformanceTab() {
 
   const pieColors = ['hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))'];
 
+  const performerData = metrics.chronicPerformers as unknown as Record<string, unknown>[];
+  const performerColumns = columns as unknown as Column<Record<string, unknown>>[];
+
   return (
     <div className="space-y-6 animate-fade-in">
       <ThresholdControl
@@ -31,7 +34,6 @@ export default function PerformanceTab() {
         value={thresholds.chronicPerformance}
         onChange={(v) => dispatch({ type: 'SET_THRESHOLDS', payload: { chronicPerformance: v } })}
       />
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KPICard label="Chronic Under-performers" value={metrics.chronicPerformers.length} icon="Activity" color="destructive" />
         <KPICard label="Avg Achievement" value={metrics.avgAchievement} format="percent" icon="Target" color={metrics.avgAchievement >= 80 ? 'success' : 'warning'} />
@@ -78,7 +80,7 @@ export default function PerformanceTab() {
       </ChartContainer>
 
       <ChartContainer title="Chronic Under-performers" description={`BACs missing targets for ${thresholds.chronicPerformance}+ months`}>
-        <DataTable data={metrics.chronicPerformers} columns={columns} searchKey="bacName" onExport={() => {}} />
+        <DataTable data={performerData} columns={performerColumns} searchKey="bacName" onExport={() => { }} />
       </ChartContainer>
     </div>
   );

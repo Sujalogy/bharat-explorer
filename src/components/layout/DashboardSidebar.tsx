@@ -3,15 +3,12 @@ import { cn } from '@/lib/utils';
 import { useDashboard } from '@/context/DashboardContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { LayoutDashboard, TrendingUp, ClipboardList, BarChart3, Users, FileText, Settings, ChevronRight, ChevronLeft, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Users, FileText, Settings, ChevronRight, ChevronLeft, Sun, Moon, Home } from 'lucide-react';
 
 const navItems = [
+  { id: 'home', label: 'Home', icon: Home }, // New Home Tab
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'performance', label: 'Performance', icon: TrendingUp },
-  { id: 'planning', label: 'Planning', icon: ClipboardList },
-  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-  { id: 'bac-management', label: 'BAC Management', icon: Users },
-  { id: 'reports', label: 'Reports', icon: FileText },
+  { id: 'visit-reports', label: 'Visit Reports', icon: FileText }, 
   { id: 'settings', label: 'Settings', icon: Settings },
 ];
 

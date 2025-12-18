@@ -2,10 +2,10 @@ import { useDashboard } from '@/context/DashboardContext';
 import { usePlanningMetrics } from '@/hooks/usePlanningMetrics';
 import KPICard from '@/components/shared/KPICard';
 import ChartContainer from '@/components/shared/ChartContainer';
-import ThresholdControl from '@/components/shared/ThresholdControl';
 import DataTable, { StatusBadge, Column } from '@/components/shared/DataTable';
 import { ChronicPlanner } from '@/types/dashboard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
+import ThresholdControl from '../shared/ThresholdControl';
 
 export default function PlanningTab() {
   const { state, dispatch } = useDashboard();
@@ -24,6 +24,9 @@ export default function PlanningTab() {
 
   const pieColors = ['hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))'];
 
+  const plannerData = metrics.chronicPlanners as unknown as Record<string, unknown>[];
+  const plannerColumns = columns as unknown as Column<Record<string, unknown>>[];
+
   return (
     <div className="space-y-6 animate-fade-in">
       <ThresholdControl
@@ -31,7 +34,6 @@ export default function PlanningTab() {
         value={thresholds.chronicPlanning}
         onChange={(v) => dispatch({ type: 'SET_THRESHOLDS', payload: { chronicPlanning: v } })}
       />
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KPICard label="Chronic Under-planners" value={metrics.chronicPlanners.length} icon="Activity" color="destructive" />
         <KPICard label="Avg Planning %" value={metrics.avgPlanning} format="percent" icon="Target" color={metrics.avgPlanning >= 80 ? 'success' : 'warning'} />
@@ -79,7 +81,7 @@ export default function PlanningTab() {
       </ChartContainer>
 
       <ChartContainer title="Chronic Under-planners" description={`BACs under-planning for ${thresholds.chronicPlanning}+ months`}>
-        <DataTable data={metrics.chronicPlanners} columns={columns} searchKey="bacName" onExport={() => {}} />
+        <DataTable data={plannerData} columns={plannerColumns} searchKey="bacName" onExport={() => { }} />
       </ChartContainer>
     </div>
   );
