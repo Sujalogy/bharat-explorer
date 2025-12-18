@@ -1,20 +1,9 @@
-import { 
-  LayoutDashboard, 
-  TrendingUp, 
-  ClipboardList, 
-  BarChart3, 
-  Users, 
-  FileText, 
-  Settings,
-  Moon,
-  Sun,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { useDashboard } from '@/context/DashboardContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { LayoutDashboard, TrendingUp, ClipboardList, BarChart3, Users, FileText, Settings, ChevronRight, ChevronLeft, Sun, Moon } from 'lucide-react';
 
 const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -29,9 +18,11 @@ const navItems = [
 export default function DashboardSidebar() {
   const { state, dispatch } = useDashboard();
   const { activeTab, sidebarCollapsed, darkMode } = state;
-
+  const handleTabChange = (tabId: string) => {
+    dispatch({ type: 'SET_ACTIVE_TAB', payload: tabId });
+  };
   return (
-    <aside 
+    <aside
       className={cn(
         "h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 border-r border-sidebar-border",
         sidebarCollapsed ? "w-[60px]" : "w-[260px]"
@@ -58,16 +49,16 @@ export default function DashboardSidebar() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
-            
+
             return (
               <button
                 key={item.id}
-                onClick={() => dispatch({ type: 'SET_ACTIVE_TAB', payload: item.id })}
+                onClick={() => handleTabChange(item.id)}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                   "hover:bg-sidebar-accent",
-                  isActive 
-                    ? "bg-sidebar-accent text-sidebar-primary" 
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-primary"
                     : "text-sidebar-muted hover:text-sidebar-foreground",
                   sidebarCollapsed && "justify-center px-2"
                 )}

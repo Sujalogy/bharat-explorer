@@ -1,155 +1,44 @@
-import { useState, useCallback } from 'react';
-import { RotateCcw, Download, ZoomIn, ZoomOut } from 'lucide-react';
+import { useCallback, useState } from 'react';
 import IndiaMap from './IndiaMap';
-import MapBreadcrumb from './MapBreadcrumb';
-import MapSearch from './MapSearch';
 import MapLegend from './MapLegend';
 import MiniMap from './MiniMap';
 import { SelectedRegion, RegionData } from '@/types/map';
 import { sampleStateData, sampleDistrictData, sampleBlockData } from '@/data/sampleData';
-import { Button } from '@/components/ui/button';
+import { useDashboard } from '@/context/DashboardContext';
 
-type ViewLevel = 'national' | 'state' | 'district';
 type ColorMetric = 'achievement' | 'visits' | 'planning';
 
 const MapViewer = () => {
-  const [currentLevel, setCurrentLevel] = useState<ViewLevel>('national');
-  const [selectedState, setSelectedState] = useState<string | undefined>();
-  const [selectedDistrict, setSelectedDistrict] = useState<string | undefined>();
+  const { state, dispatch } = useDashboard();
+  const { currentLevel, selectedState, selectedDistrict } = state.mapState;
   const [colorMetric, setColorMetric] = useState<ColorMetric>('achievement');
-
   const getCurrentData = (): RegionData[] => {
     switch (currentLevel) {
-      case 'national':
-        return sampleStateData;
-      case 'state':
-        return sampleDistrictData.filter(d => d.state === selectedState);
-      case 'district':
-        return sampleBlockData.filter(d => d.district === selectedDistrict);
-      default:
-        return [];
+      case 'national': return sampleStateData;
+      case 'state': return sampleDistrictData.filter(d => d.state === selectedState);
+      case 'district': return sampleBlockData.filter(d => d.district === selectedDistrict);
+      default: return [];
     }
   };
 
-  const getColorScale = (): [number, number] => {
-    if (colorMetric === 'visits') {
-      const data = getCurrentData();
-      const values = data.map(d => d.visits);
-      return [Math.min(...values), Math.max(...values)];
-    }
-    return [0, 100];
-  };
+  const getColorScale = (): [number, number] => [0, 100];
 
   const handleRegionClick = useCallback((region: SelectedRegion) => {
     if (currentLevel === 'national') {
-      setSelectedState(region.name);
-      setCurrentLevel('state');
+      dispatch({ type: 'SET_MAP_STATE', payload: { currentLevel: 'state', selectedState: region.name } });
+      dispatch({ type: 'SET_FILTERS', payload: { state: region.name } });
     } else if (currentLevel === 'state') {
-      setSelectedDistrict(region.name);
-      setCurrentLevel('district');
+      dispatch({ type: 'SET_MAP_STATE', payload: { currentLevel: 'district', selectedDistrict: region.name } });
+      dispatch({ type: 'SET_FILTERS', payload: { district: region.name } });
     }
-    // At district level, clicking doesn't navigate further
-  }, [currentLevel]);
-
-  const handleNavigate = useCallback((level: ViewLevel) => {
-    setCurrentLevel(level);
-    if (level === 'national') {
-      setSelectedState(undefined);
-      setSelectedDistrict(undefined);
-    } else if (level === 'state') {
-      setSelectedDistrict(undefined);
-    }
-  }, []);
-
-  const handleSearchSelect = useCallback((
-    type: 'state' | 'district' | 'block',
-    name: string,
-    state?: string,
-    district?: string
-  ) => {
-    if (type === 'state') {
-      setSelectedState(name);
-      setSelectedDistrict(undefined);
-      setCurrentLevel('state');
-    } else if (type === 'district' && state) {
-      setSelectedState(state);
-      setSelectedDistrict(name);
-      setCurrentLevel('district');
-    } else if (type === 'block' && state && district) {
-      setSelectedState(state);
-      setSelectedDistrict(district);
-      setCurrentLevel('district');
-    }
-  }, []);
-
-  const handleReset = () => {
-    setCurrentLevel('national');
-    setSelectedState(undefined);
-    setSelectedDistrict(undefined);
-  };
-
-  const handleExport = () => {
-    // Export current view as SVG
-    const svgElement = document.querySelector('.animate-map-zoom-in');
-    if (svgElement) {
-      const serializer = new XMLSerializer();
-      const svgString = serializer.serializeToString(svgElement);
-      const blob = new Blob([svgString], { type: 'image/svg+xml' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `india-map-${currentLevel}-${selectedState || 'national'}.svg`;
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-  };
+  }, [currentLevel, dispatch]);
 
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-card/80 backdrop-blur-sm px-4 py-3">
-        <div className="flex items-center justify-between max-w-[1800px] mx-auto">
-          <div className="flex items-center gap-6">
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">India Map Visualization</h1>
-              <p className="text-xs text-muted-foreground">Interactive hierarchical data explorer</p>
-            </div>
-            <MapBreadcrumb
-              currentLevel={currentLevel}
-              selectedState={selectedState}
-              selectedDistrict={selectedDistrict}
-              onNavigate={handleNavigate}
-            />
-          </div>
-          <div className="flex items-center gap-3">
-            <MapSearch onSelect={handleSearchSelect} />
-            <div className="h-6 w-px bg-border" />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleReset}
-              className="gap-1.5"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExport}
-              className="gap-1.5"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <div className="flex flex-col w-full bg-background" style={{ height: 'calc(100vh - 120px)' }}>
       {/* Main content */}
-      <main className="flex-1 relative overflow-hidden">
+     <main className="flex-1 relative overflow-hidden flex flex-col items-center">
         {/* Map container */}
-        <div className="absolute inset-0 p-4">
+        <div className="w-full max-w-4xl h-[600px] p-4 mx-auto">
           <div className="w-full h-full rounded-xl border border-border overflow-hidden shadow-lg bg-map-bg">
             <IndiaMap
               data={getCurrentData()}
@@ -173,11 +62,10 @@ const MapViewer = () => {
                 <button
                   key={metric}
                   onClick={() => setColorMetric(metric)}
-                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
-                    colorMetric === metric
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                  }`}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${colorMetric === metric
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                    }`}
                 >
                   {metric.charAt(0).toUpperCase() + metric.slice(1)}
                 </button>
@@ -212,14 +100,14 @@ const MapViewer = () => {
                 {getCurrentData().length}
               </p>
               <p className="text-xs text-muted-foreground">
-                {currentLevel === 'national' ? 'States/UTs' : 
-                 currentLevel === 'state' ? 'Districts' : 'Blocks'}
+                {currentLevel === 'national' ? 'States/UTs' :
+                  currentLevel === 'state' ? 'Districts' : 'Blocks'}
               </p>
             </div>
             <div>
               <p className="text-2xl font-bold text-foreground font-mono">
                 {Math.round(
-                  getCurrentData().reduce((sum, d) => sum + d.achievement, 0) / 
+                  getCurrentData().reduce((sum, d) => sum + d.achievement, 0) /
                   getCurrentData().length || 0
                 )}%
               </p>
