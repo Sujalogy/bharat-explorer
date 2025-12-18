@@ -6,112 +6,141 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 215 25% 15%;
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 200 80% 35%;
+    --primary: 226 71% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 200 15% 92%;
-    --secondary-foreground: 215 25% 25%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 15% 94%;
-    --muted-foreground: 215 15% 45%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 200 70% 50%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 210 20% 88%;
-    --input: 210 20% 88%;
-    --ring: 200 80% 35%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 226 71% 50%;
 
     --radius: 0.5rem;
 
     /* Map specific tokens */
-    --map-bg: 200 30% 96%;
-    --map-border: 200 15% 70%;
-    --map-border-hover: 200 80% 45%;
-    --map-region-default: 200 20% 85%;
-    --map-region-hover: 200 40% 80%;
-    --map-region-selected: 200 70% 50%;
-    --map-water: 200 60% 92%;
+    --map-bg: 220 20% 97%;
+    --map-border: 220 13% 75%;
+    --map-border-hover: 226 71% 50%;
+    --map-region-default: 220 14% 90%;
+    --map-region-hover: 220 20% 85%;
+    --map-region-selected: 226 71% 50%;
+    --map-water: 199 89% 94%;
     
     /* Metric gradient colors */
-    --metric-low: 0 72% 51%;
-    --metric-medium: 45 93% 47%;
+    --metric-low: 0 84% 60%;
+    --metric-medium: 38 92% 50%;
     --metric-high: 142 71% 45%;
     
     /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(215 25% 15% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(215 25% 15% / 0.1), 0 2px 4px -2px hsl(215 25% 15% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(215 25% 15% / 0.1), 0 4px 6px -4px hsl(215 25% 15% / 0.1);
-    --shadow-glow: 0 0 20px hsl(200 80% 50% / 0.3);
+    --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1), 0 2px 4px -2px hsl(222 47% 11% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
+    --shadow-glow: 0 0 20px hsl(226 71% 50% / 0.3);
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Sidebar */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 226 71% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 40% 18%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 222 40% 20%;
+    --sidebar-ring: 226 71% 50%;
+    --sidebar-muted: 220 9% 60%;
+
+    /* Chart colors */
+    --chart-1: 226 71% 50%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 280 65% 60%;
   }
 
   .dark {
-    --background: 215 25% 10%;
-    --foreground: 210 20% 95%;
+    --background: 222 47% 8%;
+    --foreground: 220 14% 96%;
 
-    --card: 215 25% 13%;
-    --card-foreground: 210 20% 95%;
+    --card: 222 47% 11%;
+    --card-foreground: 220 14% 96%;
 
-    --popover: 215 25% 13%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 220 14% 96%;
 
-    --primary: 200 70% 50%;
-    --primary-foreground: 215 25% 10%;
+    --primary: 226 71% 60%;
+    --primary-foreground: 222 47% 8%;
 
-    --secondary: 215 20% 20%;
-    --secondary-foreground: 210 20% 90%;
+    --secondary: 222 40% 18%;
+    --secondary-foreground: 220 14% 96%;
 
-    --muted: 215 20% 18%;
-    --muted-foreground: 215 15% 60%;
+    --muted: 222 40% 18%;
+    --muted-foreground: 220 9% 60%;
 
-    --accent: 200 70% 50%;
-    --accent-foreground: 215 25% 10%;
+    --accent: 222 40% 18%;
+    --accent-foreground: 220 14% 96%;
 
-    --destructive: 0 62% 50%;
+    --destructive: 0 62% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 215 20% 22%;
-    --input: 215 20% 22%;
-    --ring: 200 70% 50%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+
+    --border: 222 40% 20%;
+    --input: 222 40% 20%;
+    --ring: 226 71% 60%;
 
     /* Map specific tokens - dark */
-    --map-bg: 215 25% 12%;
-    --map-border: 215 20% 35%;
-    --map-border-hover: 200 70% 55%;
-    --map-region-default: 215 20% 25%;
-    --map-region-hover: 215 25% 32%;
-    --map-region-selected: 200 70% 45%;
-    --map-water: 215 30% 15%;
+    --map-bg: 222 47% 10%;
+    --map-border: 222 40% 30%;
+    --map-border-hover: 226 71% 60%;
+    --map-region-default: 222 40% 20%;
+    --map-region-hover: 222 40% 28%;
+    --map-region-selected: 226 71% 55%;
+    --map-water: 222 50% 13%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    /* Sidebar - dark */
+    --sidebar-background: 222 47% 6%;
+    --sidebar-foreground: 220 14% 96%;
+    --sidebar-primary: 226 71% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 222 40% 12%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 222 40% 15%;
+    --sidebar-ring: 226 71% 60%;
+    --sidebar-muted: 220 9% 50%;
   }
 }
 
@@ -130,6 +159,26 @@
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
   }
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
 }
 
 /* Map animations */
@@ -175,6 +224,28 @@
   }
 }
 
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes count-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-map-fade-in {
   animation: map-fade-in 0.4s ease-out forwards;
 }
@@ -189,6 +260,14 @@
 
 .animate-tooltip-enter {
   animation: tooltip-enter 0.15s ease-out forwards;
+}
+
+.animate-slide-in-left {
+  animation: slide-in-left 0.3s ease-out forwards;
+}
+
+.animate-count-up {
+  animation: count-up 0.4s ease-out forwards;
 }
 
 /* Map region styles */
@@ -219,4 +298,14 @@
     hsl(var(--metric-medium)),
     hsl(var(--metric-high))
   );
+}
+
+/* KPI card hover effect */
+.kpi-card {
+  @apply transition-all duration-200;
+}
+
+.kpi-card:hover {
+  @apply shadow-md;
+  transform: translateY(-2px);
 }
