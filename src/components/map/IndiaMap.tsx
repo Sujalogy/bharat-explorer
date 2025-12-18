@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { MapProps, TooltipData, SelectedRegion } from '@/types/map';
+import India from "@svg-maps/india";
+import { MapProps, TooltipData, SelectedRegion, Region } from '@/types/map';
 import { getRegionsByLevel } from '@/data/indiaStates';
 import MapRegion from './MapRegion';
 import MapTooltip from './MapTooltip';
@@ -14,21 +15,38 @@ const IndiaMap = ({
   colorScale = [0, 100],
 }: MapProps) => {
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
-
   const regions = useMemo(() => {
+    if (currentLevel === 'national') {
+      return India.locations.map(loc => ({
+        id: loc.id,
+        name: loc.name,
+        path: loc.path,
+        // Centroids are not provided by the library; 
+        // labels are hidden at national level in this UI anyway.
+      })) as Region[];
+    }
+    
+    // Fallback to custom simplified paths for state/district levels
     return getRegionsByLevel(currentLevel, selectedState, selectedDistrict);
   }, [currentLevel, selectedState, selectedDistrict]);
 
+  /**
+   * Adjust the SVG viewport.
+   * Uses the library's native viewBox for national view.
+   */
   const getViewBox = () => {
+    if (currentLevel === 'national') {
+      return India.viewBox;
+    }
+    
     switch (currentLevel) {
-      case 'national':
-        return "0 0 600 750";
       case 'state':
-        return "40 250 350 280"; // Focused on Maharashtra area
+        // Values adjusted for the simplified coordinate system in indiaStates.ts
+        return "40 250 350 280"; 
       case 'district':
-        return "70 260 130 130"; // Focused on Pune area
+        return "70 260 130 130"; 
       default:
-        return "0 0 600 750";
+        return India.viewBox;
     }
   };
 
@@ -36,7 +54,7 @@ const IndiaMap = ({
     const region: SelectedRegion = {
       level: currentLevel,
       name: regionName,
-      state: currentLevel === 'state' || currentLevel === 'district' ? selectedState : regionName,
+      state: (currentLevel === 'state' || currentLevel === 'district') ? selectedState : regionName,
       district: currentLevel === 'district' ? selectedDistrict : regionName,
     };
     onRegionClick(region);
@@ -57,14 +75,10 @@ const IndiaMap = ({
 
   const getLevelTitle = () => {
     switch (currentLevel) {
-      case 'national':
-        return 'India';
-      case 'state':
-        return selectedState || 'State';
-      case 'district':
-        return selectedDistrict || 'District';
-      default:
-        return '';
+      case 'national': return 'India';
+      case 'state': return selectedState || 'State';
+      case 'district': return selectedDistrict || 'District';
+      default: return '';
     }
   };
 
@@ -76,12 +90,12 @@ const IndiaMap = ({
         preserveAspectRatio="xMidYMid meet"
         style={{ backgroundColor: 'hsl(var(--map-bg))' }}
       >
-        {/* Water/Ocean background */}
+        {/* Decorative Water background - only shows if svg is smaller than rect */}
         <rect 
-          x="-100" 
-          y="-100" 
-          width="800" 
-          height="950" 
+          x="-500" 
+          y="-500" 
+          width="2000" 
+          height="2000" 
           fill="hsl(var(--map-water))" 
         />
 
@@ -101,7 +115,7 @@ const IndiaMap = ({
           ))}
         </g>
 
-        {/* Region labels for larger views */}
+        {/* Region labels (Only for State/District levels) */}
         {currentLevel !== 'national' && regions.map((region) => (
           region.centroid && (
             <text
@@ -114,7 +128,7 @@ const IndiaMap = ({
               fill="hsl(var(--foreground))"
               fontSize={currentLevel === 'district' ? 3 : 6}
               fontWeight="500"
-              opacity={0.9}
+              opacity={0.8}
             >
               {region.name}
             </text>
@@ -122,24 +136,27 @@ const IndiaMap = ({
         ))}
       </svg>
 
-      {/* Level indicator */}
-      <div className="absolute top-4 left-4 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-3 py-1.5 shadow-sm">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+      {/* Level indicator Floating UI */}
+      <div className="absolute top-4 left-4 bg-card/90 backdrop-blur-sm border border-border rounded-lg px-3 py-1.5 shadow-sm pointer-events-none">
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest">
           {currentLevel === 'national' ? 'National View' : 
            currentLevel === 'state' ? 'State View' : 'District View'}
         </span>
-        <h3 className="text-sm font-semibold text-foreground">{getLevelTitle()}</h3>
+        <h3 className="text-sm font-bold text-foreground">{getLevelTitle()}</h3>
       </div>
 
-      {/* No data message */}
+      {/* Empty State / Error UI */}
       {regions.length === 0 && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-card border border-border rounded-lg p-6 text-center shadow-lg">
-            <p className="text-muted-foreground">
-              Detailed map data not available for this region.
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Placeholder view - actual boundaries would be loaded here.
+        <div className="absolute inset-0 flex items-center justify-center bg-background/20 backdrop-blur-[1px]">
+          <div className="bg-card border border-border rounded-xl p-8 text-center shadow-2xl max-w-xs">
+            <div className="mb-4 text-muted-foreground">
+              <svg className="w-12 h-12 mx-auto opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+              </svg>
+            </div>
+            <p className="font-semibold text-foreground">Map data missing</p>
+            <p className="text-xs text-muted-foreground mt-2">
+              Boundary data for "{selectedState}" is currently unavailable in the explorer.
             </p>
           </div>
         </div>

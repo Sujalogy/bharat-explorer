@@ -40,3 +40,69 @@
 .read-the-docs {
   color: #888;
 }
+
+path {
+  stroke: #4a5568; /* A darker slate/grey color */
+  stroke-width: 0.8; /* Increase this slightly if needed */
+  stroke-linejoin: round;
+}
+
+/* Optional: Make borders even darker when hovering */
+path:hover {
+  stroke: #1a202c;
+  stroke-width: 1.2;
+}
+
+svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* This ensures the map scales proportionally within the div */
+  object-fit: contain; 
+}
+
+.map-container {
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Container for the map */
+.map-card-content {
+  position: relative;
+  width: 100%;
+  height: 450px; /* Adjust based on your layout */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: visible; /* Prevents the map from being cut off */
+}
+
+/* Darker Borders and Smooth Hover */
+.india-map-path {
+  stroke: #2d3748; /* Darker Slate Gray */
+  stroke-width: 0.75;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.india-map-path:hover {
+  stroke: #000000; /* Pure black on hover */
+  stroke-width: 1.5;
+  cursor: pointer;
+}
+
+/* Fixing the "Hover too far" (Tooltip) */
+.custom-tooltip {
+  position: absolute;
+  pointer-events: none; /* Crucial: ensures mouse passes through to map */
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  z-index: 1000;
+  transform: translate(-50%, -120%); /* Centers tooltip above cursor */
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
