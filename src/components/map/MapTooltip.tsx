@@ -1,3 +1,7 @@
+// ============================================
+// FILE 3: src/components/map/MapTooltip.tsx
+// ============================================
+
 import { TooltipData } from '@/types/map';
 import { formatNumber, formatPercentage } from '@/utils/colorUtils';
 
@@ -7,7 +11,7 @@ interface MapTooltipProps {
 
 const MapTooltip = ({ data }: MapTooltipProps) => {
   if (!data) return null;
-
+  
   return (
     <div
       className="absolute z-50 pointer-events-none animate-tooltip-enter"

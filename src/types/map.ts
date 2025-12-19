@@ -1,3 +1,8 @@
+
+// ============================================
+// FILE 4: src/types/map.ts
+// ============================================
+
 export interface RegionData {
   state: string;
   district?: string;

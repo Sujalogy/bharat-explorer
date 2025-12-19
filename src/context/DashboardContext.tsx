@@ -1,8 +1,10 @@
+// src/context/DashboardContext.tsx
 import React, { createContext, useContext, useReducer, useMemo, useEffect, ReactNode } from 'react';
 import { DashboardState, DashboardFilters, Thresholds, MapState, VisitRecord } from '@/types/dashboard';
-import { mockData, getUniqueValues } from '@/data/mockDashboardData';
+import { getUniqueValues } from '@/data/mockDashboardData';
 
 type DashboardAction =
+  | { type: 'INITIALIZE_DATA'; payload: VisitRecord[] }
   | { type: 'SET_FILTERS'; payload: Partial<DashboardFilters> }
   | { type: 'SET_THRESHOLDS'; payload: Partial<Thresholds> }
   | { type: 'SET_MAP_STATE'; payload: Partial<MapState> }
@@ -28,50 +30,36 @@ const initialState: DashboardState = {
     selectedState: null,
     selectedDistrict: null
   },
-  rawData: mockData,
-  filteredData: mockData,
+  rawData: [], // Initialize empty
+  filteredData: [],
   activeTab: 'overview',
   sidebarCollapsed: false,
-  darkMode: false
+  darkMode: false,
+  user: undefined
 };
 
 function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
   switch (action.type) {
+    case 'INITIALIZE_DATA':
+      return { 
+        ...state, 
+        rawData: action.payload, 
+        filteredData: action.payload 
+      };
     case 'SET_FILTERS': {
       const newFilters = { ...state.filters, ...action.payload };
       
-      // Cascade filter resets
+      // Cascade resets
       if (action.payload.state && action.payload.state !== state.filters.state) {
         newFilters.district = 'All Districts';
         newFilters.block = 'All Blocks';
         newFilters.bacId = 'All BACs';
       }
-      if (action.payload.district && action.payload.district !== state.filters.district) {
-        newFilters.block = 'All Blocks';
-        newFilters.bacId = 'All BACs';
-      }
-      if (action.payload.block && action.payload.block !== state.filters.block) {
-        newFilters.bacId = 'All BACs';
-      }
 
-      // Apply filters to data
       let filteredData = state.rawData;
-      
-      if (newFilters.academicYear !== 'All Years') {
-        filteredData = filteredData.filter(d => d.academic_year === newFilters.academicYear);
-      }
-      if (newFilters.state !== 'All States') {
-        filteredData = filteredData.filter(d => d.state === newFilters.state);
-      }
-      if (newFilters.district !== 'All Districts') {
-        filteredData = filteredData.filter(d => d.district === newFilters.district);
-      }
-      if (newFilters.block !== 'All Blocks') {
-        filteredData = filteredData.filter(d => d.block === newFilters.block);
-      }
-      if (newFilters.bacId !== 'All BACs') {
-        filteredData = filteredData.filter(d => d.bac_id === newFilters.bacId);
-      }
+      if (newFilters.state !== 'All States') filteredData = filteredData.filter(d => d.state === newFilters.state);
+      if (newFilters.district !== 'All Districts') filteredData = filteredData.filter(d => d.district === newFilters.district);
+      if (newFilters.block !== 'All Blocks') filteredData = filteredData.filter(d => d.block === newFilters.block);
 
       return { ...state, filters: newFilters, filteredData };
     }
@@ -97,23 +85,26 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
   }
 }
 
-interface DashboardContextValue {
-  state: DashboardState;
-  dispatch: React.Dispatch<DashboardAction>;
-  availableFilters: {
-    states: string[];
-    districts: string[];
-    blocks: string[];
-    bacs: string[];
-  };
-}
-
-const DashboardContext = createContext<DashboardContextValue | null>(null);
+const DashboardContext = createContext<any>(null);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(dashboardReducer, initialState);
 
-  // Handle dark mode class on document
+  // FETCH DATA FROM JSON-SERVER
+  useEffect(() => {
+    const fetchApiData = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/visits');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
+        dispatch({ type: 'INITIALIZE_DATA', payload: data });
+      } catch (error) {
+        console.error("Failed to load data from json-server:", error);
+      }
+    };
+    fetchApiData();
+  }, []);
+
   useEffect(() => {
     if (state.darkMode) {
       document.documentElement.classList.add('dark');
@@ -122,42 +113,14 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
   }, [state.darkMode]);
 
-  // Calculate available filter options based on current selections
   const availableFilters = useMemo(() => {
-    let filteredForState = state.rawData;
-    let filteredForDistrict = state.rawData;
-    let filteredForBlock = state.rawData;
-    let filteredForBac = state.rawData;
-
-    if (state.filters.academicYear !== 'All Years') {
-      filteredForState = filteredForState.filter(d => d.academic_year === state.filters.academicYear);
-      filteredForDistrict = filteredForDistrict.filter(d => d.academic_year === state.filters.academicYear);
-      filteredForBlock = filteredForBlock.filter(d => d.academic_year === state.filters.academicYear);
-      filteredForBac = filteredForBac.filter(d => d.academic_year === state.filters.academicYear);
-    }
-
-    if (state.filters.state !== 'All States') {
-      filteredForDistrict = filteredForDistrict.filter(d => d.state === state.filters.state);
-      filteredForBlock = filteredForBlock.filter(d => d.state === state.filters.state);
-      filteredForBac = filteredForBac.filter(d => d.state === state.filters.state);
-    }
-
-    if (state.filters.district !== 'All Districts') {
-      filteredForBlock = filteredForBlock.filter(d => d.district === state.filters.district);
-      filteredForBac = filteredForBac.filter(d => d.district === state.filters.district);
-    }
-
-    if (state.filters.block !== 'All Blocks') {
-      filteredForBac = filteredForBac.filter(d => d.block === state.filters.block);
-    }
-
     return {
-      states: getUniqueValues(filteredForState, 'state'),
-      districts: getUniqueValues(filteredForDistrict, 'district'),
-      blocks: getUniqueValues(filteredForBlock, 'block'),
-      bacs: getUniqueValues(filteredForBac, 'bac_id')
+      states: getUniqueValues(state.rawData, 'state'),
+      districts: getUniqueValues(state.rawData, 'district'),
+      blocks: getUniqueValues(state.rawData, 'block'),
+      bacs: getUniqueValues(state.rawData, 'bac_id')
     };
-  }, [state.rawData, state.filters]);
+  }, [state.rawData]);
 
   return (
     <DashboardContext.Provider value={{ state, dispatch, availableFilters }}>
@@ -168,8 +131,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
 export function useDashboard() {
   const context = useContext(DashboardContext);
-  if (!context) {
-    throw new Error('useDashboard must be used within a DashboardProvider');
-  }
+  if (!context) throw new Error('useDashboard must be used within a DashboardProvider');
   return context;
 }

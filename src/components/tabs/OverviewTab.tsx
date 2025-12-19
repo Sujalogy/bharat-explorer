@@ -1,4 +1,3 @@
-// src/components/tabs/OverviewTab.tsx
 import { useMemo } from 'react';
 import { useDashboard } from '@/context/DashboardContext';
 import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
@@ -17,31 +16,51 @@ export default function OverviewTab() {
   const { filteredData, mapState } = state;
   const metrics = usePerformanceMetrics(filteredData, state.thresholds.chronicPerformance);
 
-  // Aggregate geographic data for the map
+  // DYNAMIC AGGREGATION: Group data based on current drill-down level
   const mapData: RegionData[] = useMemo(() => {
     const grouped: Record<string, { total: number; target: number; visits: number }> = {};
+    
     filteredData.forEach(record => {
-      const key = record.state;
+      // Determine key based on map depth
+      let key = record.state;
+      if (mapState.currentLevel === 'state') key = record.district;
+      if (mapState.currentLevel === 'district') key = record.block;
+
       if (!grouped[key]) grouped[key] = { total: 0, target: 0, visits: 0 };
       grouped[key].total += record.actual_visits;
       grouped[key].target += record.target_visits;
       grouped[key].visits += record.actual_visits;
     });
-    return Object.entries(grouped).map(([state, data]) => ({
-      state,
+
+    return Object.entries(grouped).map(([key, data]) => ({
+      // Map requires these specific keys to match regions in indiaStates.ts
+      state: mapState.currentLevel === 'national' ? key : (mapState.selectedState || ''),
+      district: mapState.currentLevel === 'state' ? key : (mapState.selectedDistrict || ''),
+      block: mapState.currentLevel === 'district' ? key : '',
       achievement: data.target > 0 ? (data.total / data.target) * 100 : 0,
       visits: data.visits
     }));
-  }, [filteredData]);
+  }, [filteredData, mapState]);
 
+  // DRILL DOWN HANDLER
   const handleRegionClick = (region: SelectedRegion) => {
-    if (region.level === 'national') {
+    if (mapState.currentLevel === 'national') {
+      // Step 1: Filter dashboard data to this state
       dispatch({ type: 'SET_FILTERS', payload: { state: region.name } });
+      // Step 2: Tell map to show state view (districts)
+      dispatch({ type: 'SET_MAP_STATE', payload: { 
+        currentLevel: 'state', 
+        selectedState: region.name 
+      }});
+    } else if (mapState.currentLevel === 'state') {
+      // Step 3: Filter dashboard data to this district
+      dispatch({ type: 'SET_FILTERS', payload: { district: region.name } });
+      // Step 4: Tell map to show district view (blocks)
+      dispatch({ type: 'SET_MAP_STATE', payload: { 
+        currentLevel: 'district', 
+        selectedDistrict: region.name 
+      }});
     }
-    dispatch({ type: 'SET_MAP_STATE', payload: { 
-      currentLevel: region.level === 'national' ? 'state' : region.level,
-      selectedState: region.state || region.name
-    }});
   };
 
   const columns: Column<VisitRecord>[] = [
@@ -66,7 +85,6 @@ export default function OverviewTab() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Top Level KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <KPICard label="Avg Achievement" value={metrics.avgAchievement} format="percent" icon="Target" color="success" />
         <KPICard label="Total Visits" value={metrics.totalVisits} icon="Eye" color="info" />
@@ -75,26 +93,28 @@ export default function OverviewTab() {
         <KPICard label="Total Records" value={filteredData.length} icon="BarChart3" color="info" />
       </div>
 
-      {/* Map and Side Cards Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Map Column: lg:col-span-8 (2/3 width) */}
         <div className="lg:col-span-8">
-          <ChartContainer title="National Performance Map" description="Drill down to see specific regional data" className="h-[550px]">
+          <ChartContainer 
+            title={mapState.currentLevel === 'national' ? "National Performance Map" : `${mapState.selectedState} Performance`} 
+            description="Click a region to drill down into districts and blocks" 
+            className="h-[550px]"
+          >
             <div className="h-[470px]">
               <IndiaMap
                 data={mapData}
                 onRegionClick={handleRegionClick}
                 currentLevel={mapState.currentLevel}
                 selectedState={mapState.selectedState || undefined}
+                selectedDistrict={mapState.selectedDistrict || undefined}
                 colorMetric="achievement"
               />
             </div>
           </ChartContainer>
         </div>
 
-        {/* Card View Column: lg:col-span-4 (1/3 width) */}
         <div className="lg:col-span-4 space-y-4">
-          <ChartContainer title="Top Performing States" className="h-[265px]">
+          <ChartContainer title={mapState.currentLevel === 'national' ? "Top Performing States" : "Top Districts"} className="h-[265px]">
             <ScrollArea className="h-[200px] pr-4">
               <div className="space-y-2">
                 {topPerformers.map((item, i) => (
@@ -130,11 +150,6 @@ export default function OverviewTab() {
           </ChartContainer>
         </div>
       </div>
-
-      {/* Full Detailed Data Table */}
-      <ChartContainer title="Complete Regional Breakdown" description="Full searchable list of all individual BAC visit records">
-        <DataTable data={filteredData} columns={columns} searchKey="bac_name" onExport={() => {}} />
-      </ChartContainer>
     </div>
   );
 }

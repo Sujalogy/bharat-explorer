@@ -1,31 +1,21 @@
+// src/components/tabs/PlanningTab.tsx
 import { useDashboard } from '@/context/DashboardContext';
 import { usePlanningMetrics } from '@/hooks/usePlanningMetrics';
 import KPICard from '@/components/shared/KPICard';
 import ChartContainer from '@/components/shared/ChartContainer';
-import DataTable, { StatusBadge, Column } from '@/components/shared/DataTable';
-import { ChronicPlanner } from '@/types/dashboard';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine } from 'recharts';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
+  ResponsiveContainer, PieChart, Pie, Cell, ReferenceLine 
+} from 'recharts';
 import ThresholdControl from '../shared/ThresholdControl';
+import { Sparkles, AlertCircle } from 'lucide-react';
 
 export default function PlanningTab() {
   const { state, dispatch } = useDashboard();
   const { filteredData, thresholds } = state;
   const metrics = usePlanningMetrics(filteredData, thresholds.chronicPlanning);
 
-  const columns: Column<ChronicPlanner>[] = [
-    { key: 'bacId', label: 'BAC ID', sortable: true },
-    { key: 'bacName', label: 'Name', sortable: true },
-    { key: 'state', label: 'State', sortable: true },
-    { key: 'monthsUnderplanned', label: 'Months Under', sortable: true },
-    { key: 'avgPlanning', label: 'Avg Planning %', sortable: true, render: (v) => `${(v as number).toFixed(1)}%` },
-    { key: 'planningGap', label: 'Gap', sortable: true },
-    { key: 'status', label: 'Status', render: (_, row) => <StatusBadge status={row.status} /> }
-  ];
-
   const pieColors = ['hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))'];
-
-  const plannerData = metrics.chronicPlanners as unknown as Record<string, unknown>[];
-  const plannerColumns = columns as unknown as Column<Record<string, unknown>>[];
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -34,6 +24,7 @@ export default function PlanningTab() {
         value={thresholds.chronicPlanning}
         onChange={(v) => dispatch({ type: 'SET_THRESHOLDS', payload: { chronicPlanning: v } })}
       />
+      
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KPICard label="Chronic Under-planners" value={metrics.chronicPlanners.length} icon="Activity" color="destructive" />
         <KPICard label="Avg Planning %" value={metrics.avgPlanning} format="percent" icon="Target" color={metrics.avgPlanning >= 80 ? 'success' : 'warning'} />
@@ -45,7 +36,7 @@ export default function PlanningTab() {
         <ChartContainer title="Monthly Under-planned" description="BACs below recommended targets">
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={metrics.monthlyUnderplanned}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
               <XAxis dataKey="month" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
@@ -69,7 +60,7 @@ export default function PlanningTab() {
       <ChartContainer title="Planning Compliance Trend" description="Target vs Recommended %">
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={metrics.monthlyPlanningCompliance}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-border" />
             <XAxis dataKey="month" tick={{ fontSize: 11 }} />
             <YAxis domain={[0, 120]} tick={{ fontSize: 11 }} />
             <ReferenceLine y={100} stroke="hsl(var(--success))" strokeDasharray="5 5" />
@@ -80,9 +71,16 @@ export default function PlanningTab() {
         </ResponsiveContainer>
       </ChartContainer>
 
-      <ChartContainer title="Chronic Under-planners" description={`BACs under-planning for ${thresholds.chronicPlanning}+ months`}>
-        <DataTable data={plannerData} columns={plannerColumns} searchKey="bacName" onExport={() => { }} />
-      </ChartContainer>
+      {/* Report Planning Section */}
+      <div className="p-6 bg-card border rounded-2xl space-y-4 border-l-4 border-l-warning">
+        <h3 className="font-bold flex items-center gap-2 italic">
+          <AlertCircle className="w-5 h-5 text-warning" /> Planning Accuracy Report
+        </h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Planning compliance remains a critical area with a total gap of <strong>{metrics.totalGap}</strong> visits. 
+          While <strong>{metrics.avgPlanning.toFixed(1)}%</strong> of recommended visits are being planned on average, the systemic under-planning in specific months warrants further investigation into field-level constraints.
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,15 +1,33 @@
-// src/components/map/IndiaMap.tsx
+// ============================================
+// FILE 1: src/components/map/IndiaMap.tsx
+// ============================================
+
 import { useState, useMemo, useRef } from 'react';
 import India from "@svg-maps/india";
-import { MapProps, TooltipData, SelectedRegion, Region } from '@/types/map';
-import { getRegionsByLevel } from '@/data/indiaStates';
+import { MapProps, TooltipData, Region } from '@/types/map';
+import { getRegionsByLevel, getStateShape } from '@/data/indiaStates';
 import MapRegion from './MapRegion';
 import MapTooltip from './MapTooltip';
 
-const IndiaMap = ({ data, onRegionClick, currentLevel, selectedState, selectedDistrict, colorMetric, colorScale = [0, 100] }: MapProps) => {
+/**
+ * IndiaMap Component
+ * Provides a centered, interactive SVG map with WHITE background and BLACK borders
+ */
+const IndiaMap = ({ 
+  data, 
+  onRegionClick, 
+  currentLevel, 
+  selectedState, 
+  selectedDistrict, 
+  colorMetric, 
+  colorScale = [0, 100]
+}: MapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
 
+  /**
+   * Memoized regions based on the current drill-down level.
+   */
   const regions = useMemo(() => {
     if (currentLevel === 'national') {
       return India.locations.map(loc => ({ id: loc.id, name: loc.name, path: loc.path })) as Region[];
@@ -17,7 +35,19 @@ const IndiaMap = ({ data, onRegionClick, currentLevel, selectedState, selectedDi
     return getRegionsByLevel(currentLevel, selectedState, selectedDistrict);
   }, [currentLevel, selectedState, selectedDistrict]);
 
-  // FIX: Converts screen coordinates to relative container coordinates for the tooltip
+  /**
+   * Get state background shape for state-level view
+   */
+  const stateShape = useMemo(() => {
+    if (currentLevel === 'state' && selectedState) {
+      return getStateShape(selectedState);
+    }
+    return null;
+  }, [currentLevel, selectedState]);
+
+  /**
+   * Converts screen coordinates to relative container coordinates
+   */
   const handleHover = (hoverData: any) => {
     if (!hoverData || !containerRef.current) {
       setTooltip(null);
@@ -31,25 +61,37 @@ const IndiaMap = ({ data, onRegionClick, currentLevel, selectedState, selectedDi
     });
   };
 
+  /**
+   * Adjusts the SVG viewBox for each level
+   */
   const getViewBox = () => {
     if (currentLevel === 'national') return India.viewBox;
-    // These coordinates must match the path coordinates in your indiaStates.ts
-    switch (currentLevel) {
-      case 'state': return "40 250 350 280"; 
-      case 'district': return "70 260 130 130"; 
-      default: return India.viewBox;
-    }
+    if (currentLevel === 'state') return "30 60 380 300";
+    return India.viewBox;
   };
 
   return (
-    <div ref={containerRef} className="relative w-full h-full overflow-hidden flex items-center justify-center">
+    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center p-8 overflow-hidden bg-white rounded-lg">
       <svg
         viewBox={getViewBox()}
         className="w-full h-full max-h-full animate-map-zoom-in"
         preserveAspectRatio="xMidYMid meet"
-        style={{ backgroundColor: 'hsl(var(--map-bg))' }}
+        style={{ backgroundColor: 'white' }}
       >
         <g>
+          {/* State background outline when drilling into districts */}
+          {currentLevel === 'state' && stateShape && (
+            <path
+              d={stateShape.path}
+              fill="white"
+              stroke="black"
+              strokeWidth={2.5}
+              strokeOpacity={1}
+              className="pointer-events-none"
+            />
+          )}
+          
+          {/* Render clickable regions */}
           {regions.map((region) => (
             <MapRegion
               key={region.id}
@@ -61,7 +103,12 @@ const IndiaMap = ({ data, onRegionClick, currentLevel, selectedState, selectedDi
               colorMetric={colorMetric}
               colorScale={colorScale}
               isSelected={false}
-              onClick={() => onRegionClick({ level: currentLevel, name: region.name, state: selectedState || region.name, district: selectedDistrict || region.name })}
+              onClick={() => onRegionClick({ 
+                level: currentLevel, 
+                name: region.name, 
+                state: selectedState || region.name, 
+                district: selectedDistrict || region.name 
+              })}
               onHover={handleHover}
             />
           ))}

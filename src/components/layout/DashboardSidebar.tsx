@@ -3,13 +3,17 @@ import { cn } from '@/lib/utils';
 import { useDashboard } from '@/context/DashboardContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { LayoutDashboard, BarChart3, Users, FileText, Settings, ChevronRight, ChevronLeft, Sun, Moon, Home } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Users, FileText, Settings, ChevronRight, ChevronLeft, Sun, Moon, Home, Package, GraduationCap, School } from 'lucide-react';
 
 const navItems = [
-  { id: 'home', label: 'Home', icon: Home }, // New Home Tab
+  { id: 'home', label: 'Home', icon: Home },
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'visit-reports', label: 'Visit Reports', icon: FileText }, 
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'visit-reports', label: 'Visit Reports', icon: FileText },
+  { id: 'cro', label: 'CRO Monitoring', icon: BarChart3 },
+  { id: 'tlm', label: 'TLM Delivery', icon: Package },
+  { id: 'slo', label: 'Learning Outcomes', icon: GraduationCap },
+  { id: 'school-profile', label: 'School Profile', icon: School },
+  { id: 'teacher-profile', label: 'Teacher Profile', icon: Users },
 ];
 
 export default function DashboardSidebar() {

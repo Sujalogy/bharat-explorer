@@ -1,5 +1,7 @@
+export type VisitType = 'Individual' | 'Joint';
+export type GuideFollowedStatus = 'All Steps' | 'Partial Steps' | 'None';
+
 export interface VisitRecord {
-  [key: string]: unknown; 
   id: string;
   academic_year: string;
   month: string;
@@ -13,9 +15,50 @@ export interface VisitRecord {
   target_visits: number;
   actual_visits: number;
   classroom_obs: number;
+  
+  // CRO & KPI2 Data
+  subject: 'Literacy' | 'Numeracy';
+  grade: 'Grade 1' | 'Grade 2' | 'Grade 3';
+  gender: 'Male' | 'Female';
+  students_enrolled: number;
+  students_present: number;
+  teacher_guide_available: boolean;
+  teacher_guide_followed: GuideFollowedStatus;
+  tracker_filled: boolean;
+  is_multigrade: boolean;
+  
+  // SSI Indicators
+  ssi2_effective: boolean;
+  ssi3_effective: boolean;
+  actionable_feedback_given: boolean;
+  structured_feedback_reviewed: boolean;
+  
+  // Literacy/Numeracy Practices (PP1-4, GP1-3)
+  practices: {
+    pp1: boolean; pp2: boolean; pp3: boolean; pp4: boolean;
+    gp1: boolean; gp2: boolean; gp3: boolean;
+  };
+
+  // Profile data
   school_id: string;
   arp_id: string;
-  visit_type: 'Individual' | 'Joint';
+}
+
+export interface User {
+  email: string;
+  isAuthenticated: boolean;
+}
+
+export interface DashboardState {
+  user: User | null;
+  filters: DashboardFilters;
+  thresholds: Thresholds;
+  mapState: MapState;
+  rawData: VisitRecord[];
+  filteredData: VisitRecord[];
+  activeTab: string; // home, overview, visit-report, cro, tlm, slo, school-profile, teacher-profile
+  sidebarCollapsed: boolean;
+  darkMode: boolean;
 }
 
 export interface DashboardFilters {

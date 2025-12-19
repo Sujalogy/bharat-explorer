@@ -1,0 +1,22 @@
+{
+  "visits": [
+    {
+      "id": "visit_000001",
+      "academic_year": "2023-2024",
+      "month": "October",
+      "month_index": 6,
+      "state": "Haryana",
+      "district": "Sirsa",
+      "block": "Block 1",
+      "bac_id": "BAC-HA-SIR-BLO-1",
+      "bac_name": "Officer Sirsa 1",
+      "recommended_visits": 20,
+      "target_visits": 18,
+      "actual_visits": 15,
+      "classroom_obs": 12,
+      "school_id": "SCH-HA-SIR-01",
+      "arp_id": "ARP-HA-SIR-01",
+      "visit_type": "Individual"
+    }
+  ]
+}
