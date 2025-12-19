@@ -1,35 +1,26 @@
+// src/data/mockDashboardData.ts
 import { VisitRecord } from '@/types/dashboard';
 
+// Added Jharkhand and Chhattisgarh to the main states list
 const states = [
   'Maharashtra', 'Gujarat', 'Rajasthan', 'Uttar Pradesh', 'Madhya Pradesh',
   'Karnataka', 'Tamil Nadu', 'Kerala', 'Andhra Pradesh', 'Telangana',
-  'West Bengal', 'Bihar', 'Odisha', 'Punjab', 'Haryana'
+  'West Bengal', 'Bihar', 'Odisha', 'Punjab', 'Haryana', 'Jharkhand', 'Chhattisgarh'
 ];
 
 const districtsByState: Record<string, string[]> = {
-  'Maharashtra': ['Mumbai', 'Pune', 'Nagpur', 'Nashik', 'Thane', 'Aurangabad'],
-  'Gujarat': ['Ahmedabad', 'Surat', 'Vadodara', 'Rajkot', 'Bhavnagar'],
-  'Rajasthan': ['Jaipur', 'Jodhpur', 'Udaipur', 'Kota', 'Ajmer'],
-  'Uttar Pradesh': ['Lucknow', 'Kanpur', 'Agra', 'Varanasi', 'Allahabad'],
-  'Madhya Pradesh': ['Bhopal', 'Indore', 'Jabalpur', 'Gwalior', 'Ujjain'],
-  'Karnataka': ['Bangalore', 'Mysore', 'Mangalore', 'Hubli', 'Belgaum'],
-  'Tamil Nadu': ['Chennai', 'Coimbatore', 'Madurai', 'Salem', 'Trichy'],
-  'Kerala': ['Thiruvananthapuram', 'Kochi', 'Kozhikode', 'Thrissur', 'Kannur'],
-  'Andhra Pradesh': ['Visakhapatnam', 'Vijayawada', 'Guntur', 'Nellore', 'Kurnool'],
-  'Telangana': ['Hyderabad', 'Warangal', 'Nizamabad', 'Karimnagar', 'Khammam'],
-  'West Bengal': ['Kolkata', 'Howrah', 'Asansol', 'Siliguri', 'Durgapur'],
-  'Bihar': ['Patna', 'Gaya', 'Muzaffarpur', 'Bhagalpur', 'Darbhanga'],
-  'Odisha': ['Bhubaneswar', 'Cuttack', 'Rourkela', 'Berhampur', 'Sambalpur'],
-  'Punjab': ['Ludhiana', 'Amritsar', 'Jalandhar', 'Patiala', 'Bathinda'],
-  'Haryana': ['Gurugram', 'Faridabad', 'Panipat', 'Ambala', 'Rohtak']
+  'Rajasthan': ['Sirohi', 'Jaipur', 'Jodhpur', 'Udaipur', 'Kota', 'Ajmer'],
+  // Added Fatehpur and Chandauli to Uttar Pradesh
+  'Uttar Pradesh': ['Fatehpur', 'Chandauli', 'Lucknow', 'Kanpur', 'Agra', 'Varanasi', 'Allahabad'],
+  'Haryana': ['Sirsa', 'Hisar', 'Gurugram', 'Faridabad', 'Panipat', 'Ambala', 'Rohtak'],
+  'Jharkhand': ['Khunti'],
+  'Chhattisgarh': ['Balod', 'Bastar']
 };
 
 const blocksByDistrict: Record<string, string[]> = {
-  'Pune': ['Haveli', 'Mulshi', 'Maval', 'Khed', 'Junnar', 'Ambegaon', 'Baramati', 'Indapur'],
-  'Mumbai': ['Andheri', 'Borivali', 'Kurla', 'Bandra', 'Malad'],
-  'Nagpur': ['Nagpur Rural', 'Kamptee', 'Hingna', 'Saoner', 'Umred'],
-  'Ahmedabad': ['Daskroi', 'Sanand', 'Dholka', 'Bavla', 'Viramgam'],
   'Jaipur': ['Amber', 'Sanganer', 'Bassi', 'Chaksu', 'Phagi'],
+  'Fatehpur': ['Block A', 'Block B'],
+  'Khunti': ['Khunti Block', 'Arki', 'Karra']
 };
 
 const months = [
@@ -58,13 +49,11 @@ export const generateMockData = (academicYear: string = '2023-2024'): VisitRecor
         bacs.forEach((bacId, bacIndex) => {
           months.forEach((month, monthIndex) => {
             const recommended = 20;
-            // Some BACs have lower targets (underplanning)
             const isUnderplanner = Math.random() < 0.25;
             const target = isUnderplanner 
               ? Math.floor(recommended * (0.5 + Math.random() * 0.4))
               : Math.floor(recommended * (0.8 + Math.random() * 0.25));
             
-            // Some BACs consistently miss targets (chronic performers)
             const isChronicPerformer = Math.random() < 0.2;
             const performanceRate = isChronicPerformer
               ? 0.4 + Math.random() * 0.4

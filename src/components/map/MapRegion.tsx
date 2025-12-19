@@ -1,3 +1,4 @@
+// src/components/map/MapRegion.tsx
 import { Region, RegionData } from '@/types/map';
 import { getMetricColor, getLighterColor } from '@/utils/colorUtils';
 import { useState } from 'react';
@@ -12,37 +13,29 @@ interface MapRegionProps {
   onHover: (data: { name: string; achievement?: number; visits?: number; planning?: number; x: number; y: number } | null) => void;
 }
 
-const MapRegion = ({ 
-  region, 
-  data, 
-  colorMetric, 
-  colorScale, 
-  isSelected, 
-  onClick, 
-  onHover 
-}: MapRegionProps) => {
+const MapRegion = ({ region, data, colorMetric, colorScale, isSelected, onClick, onHover }: MapRegionProps) => {
   const [isHovered, setIsHovered] = useState(false);
 
   const getValue = () => {
-    if (!data) return 50; // Default middle value
+    if (!data) return null; // Return null if no data exists
     switch (colorMetric) {
-      case 'achievement':
-        return data.achievement;
-      case 'visits':
-        return data.visits;
-      case 'planning':
-        return data.planning ?? 50;
-      default:
-        return 50;
+      case 'achievement': return data.achievement;
+      case 'visits': return data.visits;
+      case 'planning': return data.planning ?? 0;
+      default: return 0;
     }
   };
 
-  const baseColor = getMetricColor(getValue(), colorScale[0], colorScale[1]);
-  const hoverColor = getLighterColor(baseColor, 0.2);
+  const val = getValue();
+  // Highlighted color if data exists, otherwise a muted neutral color
+  const baseColor = val !== null 
+    ? getMetricColor(val, colorScale[0], colorScale[1]) 
+    : 'hsl(var(--muted) / 0.2)'; // Muted color for no-data regions
+  
+  const hoverColor = val !== null ? getLighterColor(baseColor, 0.2) : 'hsl(var(--muted) / 0.4)';
   const fillColor = isHovered ? hoverColor : baseColor;
 
-  const handleMouseEnter = (e: React.MouseEvent) => {
-    setIsHovered(true);
+  const handleMouseMove = (e: React.MouseEvent) => {
     onHover({
       name: region.name,
       achievement: data?.achievement,
@@ -53,37 +46,20 @@ const MapRegion = ({
     });
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isHovered) {
-      onHover({
-        name: region.name,
-        achievement: data?.achievement,
-        visits: data?.visits,
-        planning: data?.planning,
-        x: e.clientX,
-        y: e.clientY,
-      });
-    }
-  };
-
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-    onHover(null);
-  };
-
   return (
     <path
       d={region.path}
       fill={fillColor}
-      stroke={isSelected ? 'hsl(var(--map-region-selected))' : isHovered ? 'hsl(var(--map-border-hover))' : 'hsl(var(--map-border))'}
-      strokeWidth={isSelected ? 2.5 : isHovered ? 1.5 : 0.5}
-      className={`cursor-pointer transition-all duration-200 ${isSelected ? 'animate-pulse-glow' : ''}`}
-      onClick={onClick}
-      onMouseEnter={handleMouseEnter}
+      // DARKENED BORDERS: Stronger border for regions with data
+      stroke={val !== null ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.1)'}
+      strokeWidth={isSelected ? 2 : isHovered ? 1.2 : 0.6}
+      className={`transition-all duration-200 ${val !== null ? 'cursor-pointer' : 'cursor-default'}`}
+      onClick={() => val !== null && onClick()}
+      onMouseEnter={() => setIsHovered(true)}
       onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        filter: isHovered ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))' : 'none',
+      onMouseLeave={() => {
+        setIsHovered(false);
+        onHover(null);
       }}
     />
   );

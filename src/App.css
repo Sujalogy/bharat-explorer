@@ -81,7 +81,7 @@ svg {
 
 /* Darker Borders and Smooth Hover */
 .india-map-path {
-  stroke: #2d3748; /* Darker Slate Gray */
+  stroke: #000000; /* Darker Slate Gray */
   stroke-width: 0.75;
   outline: none;
   transition: all 0.2s ease;
