@@ -10,8 +10,15 @@ export interface RegionData {
   achievement: number;
   visits: number;
   planning?: number;
-  metric_color?: string;
+  // New Fields
+  area_sqkm?: number;
+  bac_count?: number;
+  schools_covered?: number;
+  total_schools?: number;
+  visit_count?: number;
+  obs_count?: number;
 }
+
 
 export interface Region {
   id: string;
@@ -37,11 +44,8 @@ export interface MapProps {
   colorScale?: [number, number];
 }
 
-export interface TooltipData {
+export interface TooltipData extends RegionData {
   name: string;
-  achievement?: number;
-  visits?: number;
-  planning?: number;
   x: number;
   y: number;
 }
