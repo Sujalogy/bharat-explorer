@@ -1,3 +1,4 @@
+// src/components/shared/KPICard.tsx
 import { TrendingUp, TrendingDown, Minus, Activity, Users, Target, Eye, School, BarChart3, Calendar, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
@@ -8,7 +9,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 interface KPICardProps {
   label: string;
-  value: number | string;
+  value: number | string | undefined; // Allow undefined for loading states
   change?: number;
   changeLabel?: string;
   icon: string;
@@ -29,9 +30,14 @@ export default function KPICard({
 }: KPICardProps) {
   const IconComponent = iconMap[icon] || Activity;
   
-  const formatValue = (val: number | string) => {
+  // FIX: Added defensive check for undefined/null values
+  const formatValue = (val: number | string | undefined) => {
+    if (val === undefined || val === null) return "0"; // Default fallback
     if (typeof val === 'string') return val;
     
+    // Check for NaN which can happen during math operations on empty data
+    if (isNaN(val)) return "0";
+
     switch (format) {
       case 'percent':
         return `${val.toFixed(1)}%`;

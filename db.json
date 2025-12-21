@@ -1,7 +1,7 @@
 {
   "visits": [
     {
-      "id": "visit_000001",
+      "id": "v001",
       "academic_year": "2023-2024",
       "month": "April",
       "month_index": 0,
@@ -9,89 +9,57 @@
       "district": "Sirsa",
       "block": "Sirsa",
       "bac_id": "45-Sirsa",
-      "bac_name": "Officer Sirsa 1",
+      "bac_name": "Satish Kumar",
       "recommended_visits": 20,
       "target_visits": 18,
-      "actual_visits": 15,
-      "classroom_obs": 12,
-      "school_id": "SCH-HA-SIR-045",
-      "arp_id": "ARP-HA-SIR-12",
-      "visit_type": "Individual"
+      "actual_visits": 17,
+      "classroom_obs": 14,
+      "subject": "Literacy",
+      "grade": "Grade 1",
+      "gender": "Female",
+      "students_enrolled": 35,
+      "students_present": 30,
+      "teacher_guide_available": true,
+      "teacher_guide_followed": "All Steps",
+      "tracker_filled": true,
+      "is_multigrade": false,
+      "ssi2_effective": true,
+      "ssi3_effective": true,
+      "practices": { "pp1": true, "pp2": true, "pp3": true, "pp4": true, "gp1": true, "gp2": true, "gp3": false },
+      "school_id": "SCH-HA-SIR-001",
+      "arp_id": "ARP-HA-SIR-01"
     },
     {
-      "id": "visit_000002",
+      "id": "v002",
       "academic_year": "2023-2024",
-      "month": "May",
-      "month_index": 1,
+      "month": "April",
+      "month_index": 0,
       "state": "Haryana",
       "district": "Sirsa",
       "block": "Ellenabad",
       "bac_id": "46-Ellenabad",
-      "bac_name": "Officer Sirsa 1",
+      "bac_name": "Meena Devi",
       "recommended_visits": 20,
-      "target_visits": 19,
-      "actual_visits": 17,
-      "classroom_obs": 14,
-      "school_id": "SCH-HA-SIR-012",
-      "arp_id": "ARP-HA-SIR-08",
-      "visit_type": "Joint"
-    },
-    {
-      "id": "visit_000003",
-      "academic_year": "2023-2024",
-      "month": "April",
-      "month_index": 0,
-      "state": "Uttar Pradesh",
-      "district": "Fatehpur",
-      "block": "Fatehpur",
-      "bac_id": "240-Fatehpur",
-      "bac_name": "Officer Fatehpur 1",
-      "recommended_visits": 20,
-      "target_visits": 17,
-      "actual_visits": 14,
-      "classroom_obs": 10,
-      "school_id": "SCH-UP-FAT-099",
-      "arp_id": "ARP-UP-FAT-05",
-      "visit_type": "Individual"
-    },
-    {
-      "id": "visit_000004",
-      "academic_year": "2023-2024",
-      "month": "April",
-      "month_index": 0,
-      "state": "Jharkhand",
-      "district": "Khunti",
-      "block": "Khunti (ST)",
-      "bac_id": "60-Khunti (ST)",
-      "bac_name": "Officer Khunti 1",
-      "recommended_visits": 20,
-      "target_visits": 15,
-      "actual_visits": 10,
+      "target_visits": 20,
+      "actual_visits": 12,
       "classroom_obs": 8,
-      "school_id": "SCH-JH-KHU-022",
-      "arp_id": "ARP-JH-KHU-02",
-      "visit_type": "Individual"
+      "subject": "Numeracy",
+      "grade": "Grade 2",
+      "gender": "Female",
+      "students_enrolled": 28,
+      "students_present": 22,
+      "teacher_guide_available": true,
+      "teacher_guide_followed": "Partial Steps",
+      "tracker_filled": true,
+      "is_multigrade": true,
+      "ssi2_effective": false,
+      "ssi3_effective": true,
+      "practices": { "pp1": true, "pp2": false, "pp3": true, "pp4": false, "gp1": true, "gp2": false, "gp3": false },
+      "school_id": "SCH-HA-SIR-002",
+      "arp_id": "ARP-HA-SIR-02"
     },
     {
-      "id": "visit_000005",
-      "academic_year": "2023-2024",
-      "month": "April",
-      "month_index": 0,
-      "state": "Chhattisgarh",
-      "district": "Bastar",
-      "block": "Bastar (ST)",
-      "bac_id": "85-Bastar (ST)",
-      "bac_name": "Officer Bastar 1",
-      "recommended_visits": 20,
-      "target_visits": 18,
-      "actual_visits": 16,
-      "classroom_obs": 13,
-      "school_id": "SCH-CH-BAS-087",
-      "arp_id": "ARP-CH-BAS-15",
-      "visit_type": "Joint"
-    },
-    {
-      "id": "visit_000006",
+      "id": "v003",
       "academic_year": "2023-2024",
       "month": "April",
       "month_index": 0,
@@ -99,14 +67,125 @@
       "district": "Jaipur",
       "block": "Amber",
       "bac_id": "47-Amber",
-      "bac_name": "Officer Jaipur 1",
+      "bac_name": "Rajesh Meena",
       "recommended_visits": 20,
-      "target_visits": 20,
-      "actual_visits": 19,
+      "target_visits": 18,
+      "actual_visits": 18,
       "classroom_obs": 15,
-      "school_id": "SCH-RA-JAI-001",
-      "arp_id": "ARP-RA-JAI-01",
-      "visit_type": "Individual"
+      "subject": "Literacy",
+      "grade": "Grade 3",
+      "gender": "Male",
+      "students_enrolled": 40,
+      "students_present": 38,
+      "teacher_guide_available": true,
+      "teacher_guide_followed": "All Steps",
+      "tracker_filled": true,
+      "is_multigrade": false,
+      "ssi2_effective": true,
+      "ssi3_effective": true,
+      "practices": { "pp1": true, "pp2": true, "pp3": true, "pp4": true, "gp1": true, "gp2": true, "gp3": true },
+      "school_id": "SCH-RJ-JAI-001",
+      "arp_id": "ARP-RJ-JAI-01"
+    },
+    {
+      "id": "v004",
+      "academic_year": "2023-2024",
+      "month": "May",
+      "month_index": 1,
+      "state": "Uttar Pradesh",
+      "district": "Fatehpur",
+      "block": "Bindki",
+      "bac_id": "239-Bindki",
+      "bac_name": "Suresh Singh",
+      "recommended_visits": 20,
+      "target_visits": 15,
+      "actual_visits": 14,
+      "classroom_obs": 11,
+      "subject": "Numeracy",
+      "grade": "Grade 1",
+      "gender": "Male",
+      "students_enrolled": 32,
+      "students_present": 28,
+      "teacher_guide_available": true,
+      "teacher_guide_followed": "All Steps",
+      "tracker_filled": true,
+      "is_multigrade": false,
+      "ssi2_effective": true,
+      "ssi3_effective": false,
+      "practices": { "pp1": true, "pp2": true, "pp3": false, "pp4": false, "gp1": true, "gp2": true, "gp3": true },
+      "school_id": "SCH-UP-FAT-001",
+      "arp_id": "ARP-UP-FAT-01"
     }
-  ] 
+  ],
+  "cro": {
+    "kpis": {
+      "enrolled_students": 18420,
+      "attendance_percentage": 78.5,
+      "schools_covered": 842,
+      "total_schools": 1200,
+      "multigrade_schools": 340
+    },
+    "grade_distribution": [
+      { "name": "Grade 1", "val": 35 },
+      { "name": "Grade 2", "val": 38 },
+      { "name": "Grade 3", "val": 27 }
+    ],
+    "visit_types": [
+      { "name": "Individual", "value": 78 },
+      { "name": "Joint", "value": 22 }
+    ],
+    "teacher_guide_adherence": {
+      "available": 94,
+      "followed_all": 72,
+      "followed_partial": 22
+    }
+  },
+  "tlm": {
+    "availability": 82,
+    "usage": 68,
+    "monthly_trend": [
+      { "month": "April", "availability": 78, "usage": 62 },
+      { "month": "May", "availability": 82, "usage": 68 },
+      { "month": "June", "availability": 80, "usage": 65 }
+    ]
+  },
+  "slo": [
+    { "name": "ORF", "val": 48 },
+    { "name": "Reading", "val": 42 },
+    { "name": "Writing", "val": 35 },
+    { "name": "Dictation", "val": 31 },
+    { "name": "Word Recognition", "val": 58 }
+  ],
+  "schools": {
+    "kpis": {
+      "total_udise": 2450,
+      "verified": 2310,
+      "infrastructure_index": 7.8
+    },
+    "infrastructure": [
+      { "name": "Library", "value": 840 },
+      { "name": "Smart Classroom", "value": 420 },
+      { "name": "Science Lab", "value": 180 },
+      { "name": "Standard Facilities", "value": 1010 }
+    ],
+    "verification_status": [
+      { "state": "Jharkhand", "percentage": 88 },
+      { "state": "Haryana", "percentage": 94 },
+      { "state": "Uttar Pradesh", "percentage": 91 },
+      { "state": "Rajasthan", "percentage": 89 }
+    ]
+  },
+  "teachers": {
+    "kpis": {
+      "total_teachers": 8450,
+      "training_completion": 81,
+      "avg_experience": 9.2,
+      "llf_certified": 4200
+    },
+    "training_modules": [
+      { "name": "FLN Basic", "completed": 92, "pending": 8 },
+      { "name": "Pedagogy L2", "completed": 74, "pending": 26 },
+      { "name": "Digital Literacy", "completed": 55, "pending": 45 }
+    ]
+  }
 }

@@ -1,5 +1,5 @@
 // src/components/tabs/CROTab.tsx
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useDashboard } from '@/context/DashboardContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChartContainer from '@/components/shared/ChartContainer';
@@ -11,7 +11,14 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 export default function CROTab() {
   const { state } = useDashboard();
+  const [croData, setCroData] = useState<any>(null);
   const [subTab, setSubTab] = useState('compliance');
+
+  useEffect(() => {
+    fetch('http://localhost:3001/cro')
+      .then(res => res.json())
+      .then(data => setCroData(data));
+  }, []);
 
   // SSI Logic: Dynamically set targets based on the selected state
   const ssiTargets = useMemo(() => {
@@ -33,17 +40,17 @@ export default function CROTab() {
         {/* --- Sub-Tab 1: Basic Compliance --- */}
         <TabsContent value="compliance" className="space-y-6 mt-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <KPICard label="Enrolled Students" value={12450} icon="Users" />
+            <KPICard label="Enrolled Students" value={croData?.kpis.enrolled_students} icon="Users" />
             <KPICard label="Attendance %" value={82} format="percent" color="info" icon={''} />
             <KPICard label="Schools Covered" value="450 / 500" icon="School" />
             <KPICard label="Multigrade Schools" value={124} color="warning" icon={''} />
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <ChartContainer title="Visit Distribution by Grade">
               <div className="h-[300px]">
                 <ResponsiveContainer>
-                  <BarChart data={[{name: 'G1', val: 40}, {name: 'G2', val: 35}, {name: 'G3', val: 25}]}>
+                  <BarChart data={[{ name: 'G1', val: 40 }, { name: 'G2', val: 35 }, { name: 'G3', val: 25 }]}>
                     <XAxis dataKey="name" /> <YAxis /> <Tooltip />
                     <Bar dataKey="val" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -54,7 +61,7 @@ export default function CROTab() {
               <div className="h-[300px]">
                 <ResponsiveContainer>
                   <PieChart>
-                    <Pie data={[{name: 'Individual', value: 70}, {name: 'Joint', value: 30}]} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                    <Pie data={[{ name: 'Individual', value: 70 }, { name: 'Joint', value: 30 }]} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                       {COLORS.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                     </Pie>
                     <Tooltip />
