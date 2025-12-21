@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import IndiaMap from './IndiaMap';
 import MapLegend from './MapLegend';
 import MiniMap from './MiniMap';
@@ -33,10 +33,23 @@ const MapViewer = () => {
     }
   }, [currentLevel, dispatch]);
 
+  useEffect(() => {
+    const handleReset = () => {
+      dispatch({
+        type: 'SET_MAP_STATE',
+        payload: { currentLevel: 'national', selectedState: null, selectedDistrict: null }
+      });
+      dispatch({ type: 'SET_FILTERS', payload: { state: '', district: '' } });
+    };
+
+    window.addEventListener('reset-map-view', handleReset);
+    return () => window.removeEventListener('reset-map-view', handleReset);
+  }, [dispatch]);
+
   return (
     <div className="flex flex-col w-full bg-background" style={{ height: 'calc(100vh - 120px)' }}>
       {/* Main content */}
-     <main className="flex-1 relative overflow-hidden flex flex-col items-center">
+      <main className="flex-1 relative overflow-hidden flex flex-col items-center">
         {/* Map container */}
         <div className="w-full max-w-4xl h-[600px] p-4 mx-auto">
           <div className="w-full h-full rounded-xl border border-border overflow-hidden shadow-lg bg-map-bg">
