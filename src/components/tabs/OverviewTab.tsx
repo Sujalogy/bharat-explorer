@@ -1,155 +1,105 @@
 import { useMemo } from 'react';
 import { useDashboard } from '@/context/DashboardContext';
-import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
-import KPICard from '@/components/shared/KPICard';
-import ChartContainer from '@/components/shared/ChartContainer';
 import IndiaMap from '@/components/map/IndiaMap';
-import DataTable, { Column } from '@/components/shared/DataTable';
-import { SelectedRegion, RegionData } from '@/types/map';
-import { VisitRecord } from '@/types/dashboard';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { TrendingUp, AlertTriangle } from 'lucide-react';
+import KPICard from '@/components/shared/KPICard';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Globe, Landmark, Building2, MapPin, Box } from 'lucide-react';
+import ChartContainer from '@/components/shared/ChartContainer';
 
 export default function OverviewTab() {
   const { state, dispatch } = useDashboard();
-  const { filteredData, mapState } = state;
-  const metrics = usePerformanceMetrics(filteredData, state.thresholds.chronicPerformance);
+  const { filteredData, mapState, rawData } = state;
 
-  // DYNAMIC AGGREGATION: Group data based on current drill-down level
-  const mapData: RegionData[] = useMemo(() => {
-    const grouped: Record<string, { total: number; target: number; visits: number }> = {};
-    
-    filteredData.forEach(record => {
-      // Determine key based on map depth
-      let key = record.state;
-      if (mapState.currentLevel === 'state') key = record.district;
-      if (mapState.currentLevel === 'district') key = record.block;
+  // Calculate hierarchy metrics for the tree card
+  const hierarchy = useMemo(() => {
+    const calc = (data: any[]) => {
+      const target = data.reduce((s, r) => s + (r.target_visits || 0), 0);
+      const actual = data.reduce((s, r) => s + (r.actual_visits || 0), 0);
+      return { achievement: target > 0 ? (actual / target) * 100 : 0, visits: actual };
+    };
+    return {
+      national: { name: "India", ...calc(rawData) },
+      state: mapState.selectedState ? { 
+        name: mapState.selectedState, 
+        ...calc(rawData.filter(d => d.state === mapState.selectedState)) 
+      } : null,
+      district: mapState.selectedDistrict ? { 
+        name: mapState.selectedDistrict, 
+        ...calc(rawData.filter(d => d.district === mapState.selectedDistrict)) 
+      } : null,
+      block: mapState.selectedBlock ? { 
+        name: mapState.selectedBlock, 
+        ...calc(rawData.filter(d => d.block === mapState.selectedBlock)) 
+      } : null,
+    };
+  }, [rawData, mapState]);
 
-      if (!grouped[key]) grouped[key] = { total: 0, target: 0, visits: 0 };
-      grouped[key].total += record.actual_visits;
-      grouped[key].target += record.target_visits;
-      grouped[key].visits += record.actual_visits;
-    });
-
-    return Object.entries(grouped).map(([key, data]) => ({
-      // Map requires these specific keys to match regions in indiaStates.ts
-      state: mapState.currentLevel === 'national' ? key : (mapState.selectedState || ''),
-      district: mapState.currentLevel === 'state' ? key : (mapState.selectedDistrict || ''),
-      block: mapState.currentLevel === 'district' ? key : '',
-      achievement: data.target > 0 ? (data.total / data.target) * 100 : 0,
-      visits: data.visits
-    }));
-  }, [filteredData, mapState]);
-
-  // DRILL DOWN HANDLER
-  const handleRegionClick = (region: SelectedRegion) => {
+  const handleRegionClick = (region: any) => {
     if (mapState.currentLevel === 'national') {
-      // Step 1: Filter dashboard data to this state
-      dispatch({ type: 'SET_FILTERS', payload: { state: region.name } });
-      // Step 2: Tell map to show state view (districts)
-      dispatch({ type: 'SET_MAP_STATE', payload: { 
-        currentLevel: 'state', 
-        selectedState: region.name 
-      }});
+      dispatch({ type: 'SET_MAP_STATE', payload: { currentLevel: 'state', selectedState: region.name } });
     } else if (mapState.currentLevel === 'state') {
-      // Step 3: Filter dashboard data to this district
-      dispatch({ type: 'SET_FILTERS', payload: { district: region.name } });
-      // Step 4: Tell map to show district view (blocks)
-      dispatch({ type: 'SET_MAP_STATE', payload: { 
-        currentLevel: 'district', 
-        selectedDistrict: region.name 
-      }});
+      dispatch({ type: 'SET_MAP_STATE', payload: { currentLevel: 'district', selectedDistrict: region.name } });
+    } else {
+      // Deep dive from District to Block level
+      dispatch({ type: 'SET_MAP_STATE', payload: { currentLevel: 'block', selectedBlock: region.name } });
     }
   };
 
-  const columns: Column<VisitRecord>[] = [
-    { key: 'bac_id', label: 'BAC ID', sortable: true },
-    { key: 'bac_name', label: 'Officer Name', sortable: true },
-    { key: 'state', label: 'State', sortable: true },
-    { key: 'district', label: 'District', sortable: true },
-    { key: 'target_visits', label: 'Target', sortable: true },
-    { key: 'actual_visits', label: 'Actual', sortable: true },
-    { 
-      key: 'id', 
-      label: 'Achievement', 
-      render: (_, row) => {
-        const percent = row.target_visits > 0 ? (row.actual_visits / row.target_visits) * 100 : 0;
-        return <span className="font-mono font-medium">{percent.toFixed(1)}%</span>;
-      }
-    },
-  ];
-
-  const topPerformers = metrics.statePerformance.slice(0, 5);
-  const bottomPerformers = [...metrics.statePerformance].reverse().slice(0, 5);
-
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <KPICard label="Avg Achievement" value={metrics.avgAchievement} format="percent" icon="Target" color="success" />
-        <KPICard label="Total Visits" value={metrics.totalVisits} icon="Eye" color="info" />
-        <KPICard label="Active BACs" value={metrics.totalBACs} icon="Users" color="default" />
-        <KPICard label="Chronic Issues" value={metrics.chronicPerformers.length} icon="Activity" color="destructive" />
-        <KPICard label="Total Records" value={filteredData.length} icon="BarChart3" color="info" />
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 p-4">
+      {/* Map Section with restored size */}
+      <div className="lg:col-span-8">
+        <ChartContainer 
+          title={mapState.currentLevel === 'national' ? "India Map" : `${mapState.selectedState || 'State'} Overview`} 
+          className="h-[600px]"
+        >
+          <div className="h-[520px]">
+            <IndiaMap
+              data={filteredData.map((d: any) => ({ ...d, achievement: (d.actual_visits/d.target_visits)*100 }))}
+              onRegionClick={handleRegionClick}
+              currentLevel={mapState.currentLevel} 
+              selectedState={mapState.selectedState}
+              selectedDistrict={mapState.selectedDistrict} 
+              selectedBlock={mapState.selectedBlock}
+              colorMetric="achievement"
+            />
+          </div>
+        </ChartContainer>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8">
-          <ChartContainer 
-            title={mapState.currentLevel === 'national' ? "National Performance Map" : `${mapState.selectedState} Performance`} 
-            description="Click a region to drill down into districts and blocks" 
-            className="h-[550px]"
-          >
-            <div className="h-[470px]">
-              <IndiaMap
-                data={mapData}
-                onRegionClick={handleRegionClick}
-                currentLevel={mapState.currentLevel}
-                selectedState={mapState.selectedState || undefined}
-                selectedDistrict={mapState.selectedDistrict || undefined}
-                colorMetric="achievement"
-              />
-            </div>
-          </ChartContainer>
-        </div>
-
-        <div className="lg:col-span-4 space-y-4">
-          <ChartContainer title={mapState.currentLevel === 'national' ? "Top Performing States" : "Top Districts"} className="h-[265px]">
-            <ScrollArea className="h-[200px] pr-4">
-              <div className="space-y-2">
-                {topPerformers.map((item, i) => (
-                  <div key={item.state} className="flex items-center justify-between p-3 rounded-lg bg-success/5 border border-success/10">
-                    <div className="flex items-center gap-3">
-                      <Badge variant="secondary" className="bg-success/20 text-success">{i + 1}</Badge>
-                      <span className="text-sm font-medium">{item.state}</span>
-                    </div>
-                    <div className="flex items-center gap-1 font-bold text-success text-sm">
-                      <TrendingUp className="w-4 h-4" />
-                      {item.value.toFixed(1)}%
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </ChartContainer>
-
-          <ChartContainer title="Needs Attention" className="h-[265px]">
-            <ScrollArea className="h-[200px] pr-4">
-              <div className="space-y-2">
-                {bottomPerformers.map((item, i) => (
-                  <div key={item.state} className="flex items-center justify-between p-3 rounded-lg bg-destructive/5 border border-destructive/10">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="w-4 h-4 text-destructive" />
-                      <span className="text-sm font-medium">{item.state}</span>
-                    </div>
-                    <span className="text-sm font-bold text-destructive">{item.value.toFixed(1)}%</span>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-          </ChartContainer>
-        </div>
+      {/* Professional Tree Section */}
+      <div className="lg:col-span-4">
+        <Card className="h-[600px] bg-card/50 backdrop-blur-sm relative border-muted/40 p-6 overflow-hidden">
+          <CardHeader className="p-0 mb-8">
+            <CardTitle className="text-sm font-bold flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-primary" /> 
+              Hierarchy Tree
+            </CardTitle>
+          </CardHeader>
+          
+          <div className="absolute left-[39px] top-24 bottom-20 w-0.5 bg-muted-foreground/20" />
+          
+          <div className="space-y-12 relative">
+            <Node label="National" data={hierarchy.national} icon={<Globe className="w-3.5 h-3.5" />} color="bg-primary" />
+            {hierarchy.state && <Node label="State" data={hierarchy.state} icon={<Landmark className="w-3.5 h-3.5" />} color="bg-blue-500" />}
+            {hierarchy.district && <Node label="District" data={hierarchy.district} icon={<Building2 className="w-3.5 h-3.5" />} color="bg-indigo-500" />}
+            {hierarchy.block && <Node label="Block" data={hierarchy.block} icon={<Box className="w-3.5 h-3.5" />} color="bg-emerald-500" />}
+          </div>
+        </Card>
       </div>
     </div>
   );
 }
+
+const Node = ({ label, data, icon, color }: any) => (
+  <div className="relative pl-12 animate-fade-in">
+    <div className={`absolute left-[-22px] top-1 w-6 h-6 rounded-full ${color} border-4 border-background flex items-center justify-center text-white p-1 shadow-sm`}>
+      {icon}
+    </div>
+    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">{label}</p>
+    <div className="flex justify-between items-center bg-background p-3 rounded-lg border shadow-sm">
+      <span className="text-sm font-bold truncate pr-2">{data.name}</span>
+      <span className="text-lg font-black text-primary">{data.achievement.toFixed(1)}%</span>
+    </div>
+  </div>
+);

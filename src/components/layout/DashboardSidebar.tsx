@@ -1,9 +1,11 @@
-
 import { cn } from '@/lib/utils';
 import { useDashboard } from '@/context/DashboardContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { LayoutDashboard, BarChart3, Users, FileText, Settings, ChevronRight, ChevronLeft, Sun, Moon, Home, Package, GraduationCap, School } from 'lucide-react';
+import { 
+  LayoutDashboard, BarChart3, Users, FileText, ChevronRight, 
+  ChevronLeft, Sun, Moon, Home, Package, GraduationCap, School 
+} from 'lucide-react';
 
 const navItems = [
   { id: 'home', label: 'Home', icon: Home },
@@ -19,17 +21,14 @@ const navItems = [
 export default function DashboardSidebar() {
   const { state, dispatch } = useDashboard();
   const { activeTab, sidebarCollapsed, darkMode } = state;
-  const handleTabChange = (tabId: string) => {
-    dispatch({ type: 'SET_ACTIVE_TAB', payload: tabId });
-  };
+
   return (
     <aside
       className={cn(
-        "h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 border-r border-sidebar-border",
+        "h-screen bg-sidebar text-sidebar-foreground flex flex-col transition-all duration-300 border-r border-sidebar-border fixed left-0 top-0 z-40",
         sidebarCollapsed ? "w-[60px]" : "w-[260px]"
       )}
     >
-      {/* Logo/Brand */}
       <div className="h-16 flex items-center px-4 border-b border-sidebar-border">
         <div className={cn("flex items-center gap-3 overflow-hidden", sidebarCollapsed && "justify-center")}>
           <div className="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center flex-shrink-0">
@@ -38,96 +37,56 @@ export default function DashboardSidebar() {
           {!sidebarCollapsed && (
             <div className="animate-slide-in-left">
               <h1 className="text-sm font-semibold text-sidebar-foreground">LLF SMT Dashboard</h1>
-              <p className="text-xs text-sidebar-muted">Visit Management</p>
+              <p className="text-[10px] text-sidebar-muted">Visit Management</p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 py-4 px-2 overflow-y-auto custom-scrollbar">
         <div className="space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
-
             return (
               <button
                 key={item.id}
-                onClick={() => handleTabChange(item.id)}
+                onClick={() => dispatch({ type: 'SET_ACTIVE_TAB', payload: item.id })}
                 className={cn(
                   "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                   "hover:bg-sidebar-accent",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-primary"
-                    : "text-sidebar-muted hover:text-sidebar-foreground",
+                  isActive ? "bg-sidebar-accent text-sidebar-primary" : "text-sidebar-muted hover:text-sidebar-foreground",
                   sidebarCollapsed && "justify-center px-2"
                 )}
                 title={sidebarCollapsed ? item.label : undefined}
               >
                 <Icon className={cn("w-5 h-5 flex-shrink-0", isActive && "text-sidebar-primary")} />
-                {!sidebarCollapsed && (
-                  <span className="text-sm font-medium truncate">{item.label}</span>
-                )}
+                {!sidebarCollapsed && <span className="text-sm font-medium truncate">{item.label}</span>}
               </button>
             );
           })}
         </div>
       </nav>
 
-      {/* Footer */}
       <div className="p-2 border-t border-sidebar-border">
-        {/* Collapse Toggle */}
         <Button
           variant="ghost"
           size="sm"
           onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
-          className={cn(
-            "w-full mb-2 text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent",
-            sidebarCollapsed && "px-2"
-          )}
+          className="w-full mb-2 text-sidebar-muted"
         >
-          {sidebarCollapsed ? (
-            <ChevronRight className="w-4 h-4" />
-          ) : (
-            <>
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              <span className="text-xs">Collapse</span>
-            </>
-          )}
+          {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <><ChevronLeft className="w-4 h-4 mr-2" /> <span className="text-xs">Collapse</span></>}
         </Button>
-
         <Separator className="mb-2 bg-sidebar-border" />
-
-        {/* Dark Mode Toggle */}
         <Button
           variant="ghost"
           size="sm"
           onClick={() => dispatch({ type: 'TOGGLE_DARK_MODE' })}
-          className={cn(
-            "w-full text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent",
-            sidebarCollapsed && "px-2"
-          )}
+          className="w-full text-sidebar-muted"
         >
-          {darkMode ? (
-            <>
-              <Sun className="w-4 h-4" />
-              {!sidebarCollapsed && <span className="ml-2 text-xs">Light Mode</span>}
-            </>
-          ) : (
-            <>
-              <Moon className="w-4 h-4" />
-              {!sidebarCollapsed && <span className="ml-2 text-xs">Dark Mode</span>}
-            </>
-          )}
+          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {!sidebarCollapsed && <span className="ml-2 text-xs">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>}
         </Button>
-
-        {/* Version */}
-        {!sidebarCollapsed && (
-          <div className="mt-3 px-3 py-2 text-xs text-sidebar-muted">
-            <p>v2.0.0 | {new Date().toLocaleDateString()}</p>
-          </div>
-        )}
       </div>
     </aside>
   );

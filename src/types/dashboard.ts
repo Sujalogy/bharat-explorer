@@ -75,9 +75,10 @@ export interface Thresholds {
 }
 
 export interface MapState {
-  currentLevel: 'national' | 'state' | 'district';
+  currentLevel: 'national' | 'state' | 'district' | 'block';
   selectedState: string | null;
   selectedDistrict: string | null;
+  selectedBlock: string | null;
 }
 
 export interface DashboardState {

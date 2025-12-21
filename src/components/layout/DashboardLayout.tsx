@@ -10,13 +10,18 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const { state } = useDashboard();
+  const { sidebarCollapsed } = state;
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <DashboardSidebar />
       
+      {/* FIX: Added dynamic padding-left to push content 
+        to the right of the FIXED sidebar 
+      */}
       <div className={cn(
-        "flex-1 flex flex-col overflow-hidden transition-all duration-300"
+        "flex-1 flex flex-col overflow-hidden transition-all duration-300",
+        sidebarCollapsed ? "pl-[60px]" : "pl-[260px]"
       )}>
         <FilterBar />
         
