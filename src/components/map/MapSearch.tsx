@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
-import { indiaStates, maharashtraDistricts, puneBlocks } from '@/data/indiaStates';
+import { indiaStates } from '@/data/indiaStates';
 
 interface MapSearchProps {
   onSelect: (type: 'state' | 'district' | 'block', name: string, state?: string, district?: string) => void;
@@ -33,20 +33,6 @@ const MapSearch = ({ onSelect }: MapSearchProps) => {
     indiaStates.forEach(state => {
       if (state.name.toLowerCase().includes(lowerQuery)) {
         allResults.push({ type: 'state', name: state.name });
-      }
-    });
-
-    // Search districts (Maharashtra example)
-    maharashtraDistricts.forEach(district => {
-      if (district.name.toLowerCase().includes(lowerQuery)) {
-        allResults.push({ type: 'district', name: district.name, state: 'Maharashtra' });
-      }
-    });
-
-    // Search blocks (Pune example)
-    puneBlocks.forEach(block => {
-      if (block.name.toLowerCase().includes(lowerQuery)) {
-        allResults.push({ type: 'block', name: block.name, state: 'Maharashtra', district: 'Pune' });
       }
     });
 

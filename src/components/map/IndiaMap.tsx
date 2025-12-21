@@ -24,7 +24,7 @@ const IndiaMap = ({
 }: MapProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
-
+  console.log(India)
   /**
    * Memoized regions based on the current drill-down level.
    */
