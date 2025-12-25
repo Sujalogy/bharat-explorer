@@ -1,40 +1,43 @@
+// src/components/map/MapBreadcrumb.tsx
 import { ChevronRight, Home } from 'lucide-react';
 
 interface MapBreadcrumbProps {
-  currentLevel: 'national' | 'state' | 'district';
+  currentLevel: 'national' | 'state' | 'district' | 'block';
   selectedState?: string;
   selectedDistrict?: string;
-  onNavigate: (level: 'national' | 'state' | 'district') => void;
+  selectedBlock?: string;
+  onNavigate: (level: 'national' | 'state' | 'district' | 'block') => void;
 }
 
 const MapBreadcrumb = ({ 
   currentLevel, 
   selectedState, 
   selectedDistrict, 
+  selectedBlock,
   onNavigate 
 }: MapBreadcrumbProps) => {
   return (
-    <nav className="flex items-center gap-1 text-sm">
+    <nav className="flex items-center gap-1 text-xs mb-4 bg-muted/30 p-2 rounded-lg border border-border/50">
       <button
         onClick={() => onNavigate('national')}
         className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
           currentLevel === 'national'
-            ? 'text-foreground font-medium'
+            ? 'text-primary font-bold'
             : 'text-muted-foreground hover:text-foreground hover:bg-muted'
         }`}
       >
-        <Home className="w-4 h-4" />
+        <Home className="w-3.5 h-3.5" />
         <span>India</span>
       </button>
 
       {selectedState && (
         <>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
           <button
             onClick={() => onNavigate('state')}
             className={`px-2 py-1 rounded transition-colors ${
               currentLevel === 'state'
-                ? 'text-foreground font-medium'
+                ? 'text-primary font-bold'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             }`}
           >
@@ -45,9 +48,25 @@ const MapBreadcrumb = ({
 
       {selectedDistrict && (
         <>
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          <span className="px-2 py-1 text-foreground font-medium">
+          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
+          <button
+            onClick={() => onNavigate('district')}
+            className={`px-2 py-1 rounded transition-colors ${
+              currentLevel === 'district'
+                ? 'text-primary font-bold'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            }`}
+          >
             {selectedDistrict}
+          </button>
+        </>
+      )}
+
+      {selectedBlock && (
+        <>
+          <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40" />
+          <span className="px-2 py-1 text-primary font-bold">
+            {selectedBlock}
           </span>
         </>
       )}
