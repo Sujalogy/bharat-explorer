@@ -1,23 +1,18 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
-import { geoMercator, geoPath, GeoProjection } from 'd3-geo';
+import { geoMercator, geoPath } from 'd3-geo';
 import { ChevronLeft, RotateCcw } from 'lucide-react';
-import { MapProps, TooltipData, Region } from '@/types/map';
+import { TooltipData } from '@/types/map';
 import MapRegion from './MapRegion';
 import MapTooltip from './MapTooltip';
 import { useDashboard } from '@/context/DashboardContext';
 import { Button } from '@/components/ui/button';
 
-// Update these paths based on your actual public folder structure
 const STATE_GEOJSON = "/states.geojson";
 const AC_GEOJSON = "/ac.geojson";
 
-interface GeoDataState {
-  states: GeoJSON.FeatureCollection | null;
-  acs: GeoJSON.FeatureCollection | null;
-}
-
 const IndiaMap = ({
   data,
+  schoolPins = [], // New prop for school locations
   onRegionClick,
   currentLevel,
   selectedState,
@@ -31,113 +26,125 @@ const IndiaMap = ({
   const [tooltip, setTooltip] = useState<TooltipData | null>(null);
   const [geoData, setGeoData] = useState<{ states: any; acs: any }>({ states: null, acs: null });
 
+  const width = 800;
+  const height = 700;
+
   // 1. Fetch GeoJSON files
   useEffect(() => {
-    fetch(STATE_GEOJSON).then(res => res.json()).then(json => setGeoData(p => ({ ...p, states: json })));
-    fetch(AC_GEOJSON).then(res => res.json()).then(json => setGeoData(p => ({ ...p, acs: json })));
+    const loadGeoData = async () => {
+      try {
+        const [statesRes, acsRes] = await Promise.all([
+          fetch(STATE_GEOJSON),
+          fetch(AC_GEOJSON)
+        ]);
+        const states = await statesRes.json();
+        const acs = await acsRes.json();
+        setGeoData({ states, acs });
+      } catch (err) {
+        console.error("GeoJSON Load Error:", err);
+      }
+    };
+    loadGeoData();
   }, []);
 
-  // 2. Filter features based on current deep-dive level
+  // 2. Filter features based on current deep-dive level (Standardized to Lowercase)
   const levelFeatures = useMemo(() => {
     if (!geoData.states || !geoData.acs) return [];
     if (currentLevel === 'national') return geoData.states.features;
 
-    if (currentLevel === 'state' && selectedState) {
+    const sState = selectedState?.toLowerCase();
+    const sDist = selectedDistrict?.toLowerCase();
+    const sBlock = selectedBlock?.toLowerCase();
+
+    if (currentLevel === 'state' && sState) {
       return geoData.acs.features.filter((f: any) =>
-        f.properties.ST_NAME?.toUpperCase() === selectedState?.toUpperCase()
+        f.properties.ST_NAME?.toLowerCase() === sState
       );
     }
-    if (currentLevel === 'district' && selectedDistrict) {
+    if (currentLevel === 'district' && sDist) {
       return geoData.acs.features.filter((f: any) =>
-        f.properties.DIST_NAME?.toUpperCase() === selectedDistrict?.toUpperCase()
+        f.properties.DIST_NAME?.toLowerCase() === sDist
       );
     }
-    if (currentLevel === 'block' && selectedBlock) {
+    if (currentLevel === 'block' && sBlock) {
       return geoData.acs.features.filter((f: any) =>
-        f.properties.AC_NAME?.toUpperCase() === selectedBlock?.toUpperCase()
+        f.properties.AC_NAME?.toLowerCase() === sBlock
       );
     }
     return [];
   }, [currentLevel, selectedState, selectedDistrict, selectedBlock, geoData]);
 
-  const width = 800;
-  const height = 700;
-
-  const projection = useMemo(() =>
-    levelFeatures.length > 0 ? geoMercator().fitSize([width, height], { type: "FeatureCollection", features: levelFeatures }) : null
-    , [levelFeatures]);
+  // 3. Projection & Path Generator
+  const projection = useMemo(() => {
+    if (levelFeatures.length === 0) return null;
+    return geoMercator().fitSize([width, height], { 
+      type: "FeatureCollection", 
+      features: levelFeatures 
+    });
+  }, [levelFeatures]);
 
   const pathGenerator = useMemo(() => projection ? geoPath().projection(projection) : null, [projection]);
 
+  // 4. Region Mapping
   const regions = useMemo(() => {
     if (!pathGenerator) return [];
     return levelFeatures.map((feature: any) => {
       const props = feature.properties;
-      let name = currentLevel === 'national' ? (props.ST_NM || props.ST_NAME) :
-        currentLevel === 'state' ? props.DIST_NAME : props.AC_NAME;
-
-      // Extract area if your GeoJSON has a property like 'AREA_KM'
-      const area = props.AREA_SQKM || props.Shape_Area || 0;
+      const name = currentLevel === 'national' ? (props.ST_NM || props.ST_NAME) :
+                   currentLevel === 'state' ? props.DIST_NAME : props.AC_NAME;
 
       return {
-        id: feature.id || `${props.AC_NO}-${name}`,
+        id: feature.id || `${props.AC_NO || props.OBJECTID}-${name}`,
         name,
         path: pathGenerator(feature) || '',
-        area_sqkm: area // Pass area from geometry to the region object
-      } as any;
+      };
     });
   }, [levelFeatures, pathGenerator, currentLevel]);
 
-  // 3. Navigation Handlers
+  // 5. Navigation Handlers
   const handleGoBack = () => {
-    if (currentLevel === 'block') {
-      dispatch({ type: 'SET_MAP_STATE', payload: { currentLevel: 'district', selectedBlock: null } });
-    } else if (currentLevel === 'district') {
-      dispatch({ type: 'SET_MAP_STATE', payload: { currentLevel: 'state', selectedDistrict: null } });
-    } else if (currentLevel === 'state') {
-      dispatch({ type: 'SET_MAP_STATE', payload: { currentLevel: 'national', selectedState: null } });
+    const payloads: any = {
+      block: { currentLevel: 'district', selectedBlock: null },
+      district: { currentLevel: 'state', selectedDistrict: null },
+      state: { currentLevel: 'national', selectedState: null }
+    };
+    if (payloads[currentLevel]) {
+      dispatch({ type: 'SET_MAP_STATE', payload: payloads[currentLevel] });
     }
   };
 
   return (
-    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center overflow-hidden bg-white">
-
+    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center overflow-hidden bg-white rounded-xl border border-muted/20 shadow-inner">
+      
       {/* Back and Reset Buttons */}
       {currentLevel !== 'national' && (
         <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleGoBack}
-            className="flex items-center gap-1.5 h-8 bg-white/90 shadow-sm border-border"
-          >
+          <Button variant="outline" size="sm" onClick={handleGoBack} className="h-8 bg-white/90 shadow-sm border-border flex items-center gap-1.5">
             <ChevronLeft className="h-4 w-4" />
             <span className="text-xs font-medium">Back</span>
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => dispatch({ type: 'RESET_FILTERS' })}
-            className="h-8 w-8 bg-white/90 shadow-sm border-border"
-            title="Reset to India"
-          >
+          <Button variant="outline" size="icon" onClick={() => dispatch({ type: 'RESET_FILTERS' })} className="h-8 w-8 bg-white/90 shadow-sm border-border">
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>
         </div>
       )}
 
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full max-h-full transition-all duration-500" preserveAspectRatio="xMidYMid meet">
+      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full max-h-full transition-all duration-700 ease-in-out" preserveAspectRatio="xMidYMid meet">
         <g>
+          {/* Layer 1: Boundary Shapes */}
           {regions.map((region: any) => (
             <MapRegion
-              key={region.id} region={region}
+              key={region.id} 
+              region={region}
               data={data.find((d: any) => {
-                const rName = region.name?.toUpperCase();
-                if (currentLevel === 'national') return d.state?.toUpperCase() === rName;
-                if (currentLevel === 'state') return d.district?.toUpperCase() === rName;
-                return d.block?.toUpperCase() === rName;
+                const rName = region.name?.toLowerCase();
+                if (currentLevel === 'national') return d.state?.toLowerCase() === rName;
+                if (currentLevel === 'state') return d.district?.toLowerCase() === rName;
+                return d.block?.toLowerCase() === rName;
               })}
-              colorMetric={colorMetric} colorScale={colorScale} isSelected={false}
+              colorMetric={colorMetric} 
+              colorScale={colorScale} 
+              isSelected={false}
               onClick={() => onRegionClick({ level: currentLevel, name: region.name })}
               onHover={(d: any) => {
                 if (!d || !containerRef.current) return setTooltip(null);
@@ -146,6 +153,35 @@ const IndiaMap = ({
               }}
             />
           ))}
+
+          {/* Layer 2: School Dots (Only rendered when projection is ready) */}
+          {projection && schoolPins.map((school: any) => {
+            // Convert [Longitude, Latitude] to [x, y]
+            const coords = projection([school.lng, school.lat]);
+            if (!coords) return null;
+
+            return (
+              <circle
+                key={school.id}
+                cx={coords[0]}
+                cy={coords[1]}
+                r={4}
+                className="fill-green-500 stroke-white stroke-[1px] cursor-pointer drop-shadow-sm hover:r-6 transition-all duration-200"
+                onMouseEnter={(e) => {
+                  const rect = containerRef.current?.getBoundingClientRect();
+                  if (!rect) return;
+                  setTooltip({
+                    name: school.name,
+                    value: "Visited",
+                    label: school.category || "School",
+                    x: e.clientX - rect.left,
+                    y: e.clientY - rect.top
+                  });
+                }}
+                onMouseLeave={() => setTooltip(null)}
+              />
+            );
+          })}
         </g>
       </svg>
       <MapTooltip data={tooltip} />

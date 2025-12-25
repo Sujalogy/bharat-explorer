@@ -48,6 +48,8 @@ export interface TooltipData {
   name: string;
   x: number;
   y: number;
+  label?: string;
+  value?: number | string;
   achievement?: number;
   visits?: number;
   area_sqkm?: number;
