@@ -1,5 +1,5 @@
 import { Search, X, Filter } from 'lucide-react';
-import { useDashboard, ACADEMIC_YEARS } from '@/context/DashboardContext';
+import { useDashboard } from '@/context/DashboardContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -16,10 +16,10 @@ export default function FilterBar() {
   const { filters } = state;
 
   const activeFilterCount = [
-    filters.state !== 'All States',
-    filters.district !== 'All Districts',
-    filters.block !== 'All Blocks',
-    filters.bacId !== 'All BACs'
+    filters.academicYear !== 'All',
+    filters.state !== 'All',
+    filters.district !== 'All',
+    filters.block !== 'All'
   ].filter(Boolean).length;
 
   const handleFilterChange = (key: string, value: string) => {
@@ -39,9 +39,12 @@ export default function FilterBar() {
 
         {/* Academic Year */}
         <Select value={filters.academicYear} onValueChange={(v) => handleFilterChange('academicYear', v)}>
-          <SelectTrigger className="w-[130px] h-9 text-xs"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="Year" /></SelectTrigger>
           <SelectContent>
-            {ACADEMIC_YEARS.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+            <SelectItem value="All">All Years</SelectItem>
+            {availableFilters.academicYears.map((year: string) => (
+              <SelectItem key={year} value={year}>{year}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
@@ -49,40 +52,40 @@ export default function FilterBar() {
         <Select value={filters.state} onValueChange={(v) => handleFilterChange('state', v)}>
           <SelectTrigger className="w-[150px] h-9 text-xs"><SelectValue placeholder="State" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="All States">All States</SelectItem>
-            {availableFilters.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            <SelectItem value="All">All States</SelectItem>
+            {availableFilters.states.map((s: string) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
           </SelectContent>
         </Select>
 
-        {/* District - Hierarchical */}
+        {/* District */}
         <Select 
-          value={filters.district} 
-          onValueChange={(v) => handleFilterChange('district', v)}
-          disabled={filters.state === 'All States'}
+            value={filters.district} 
+            onValueChange={(v) => handleFilterChange('district', v)}
+            disabled={filters.state === 'All'}
         >
           <SelectTrigger className="w-[150px] h-9 text-xs"><SelectValue placeholder="District" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="All Districts">All Districts</SelectItem>
-            {availableFilters.districts.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+            <SelectItem value="All">All Districts</SelectItem>
+            {availableFilters.districts.map((d: string) => <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>)}
           </SelectContent>
         </Select>
 
-        {/* Block - Hierarchical */}
+        {/* Block */}
         <Select 
-          value={filters.block} 
-          onValueChange={(v) => handleFilterChange('block', v)}
-          disabled={filters.district === 'All Districts'}
+            value={filters.block} 
+            onValueChange={(v) => handleFilterChange('block', v)}
+            disabled={filters.district === 'All'}
         >
-          <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="Block" /></SelectTrigger>
+          <SelectTrigger className="w-[150px] h-9 text-xs"><SelectValue placeholder="Block" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="All Blocks">All Blocks</SelectItem>
-            {availableFilters.blocks.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+            <SelectItem value="All">All Blocks</SelectItem>
+            {availableFilters.blocks.map((b: string) => <SelectItem key={b} value={b} className="capitalize">{b}</SelectItem>)}
           </SelectContent>
         </Select>
 
         <div className="relative flex-1 max-w-[180px]">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-          <Input placeholder="Search records..." className="pl-8 h-9 text-xs" />
+          <Input placeholder="Search schools..." className="pl-8 h-9 text-xs" />
         </div>
 
         {activeFilterCount > 0 && (

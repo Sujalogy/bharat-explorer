@@ -173,15 +173,6 @@ export default function OverviewTab() {
                 selectedBlock={mapState.selectedBlock}
                 colorMetric="achievement"
               />
-
-              {/* Using the shared Legend Component */}
-              <div className="absolute bottom-6 left-6 z-20">
-                <MapLegend
-                  colorMetric={activeContext === 'Visit' ? 'visits' : 'achievement'}
-                  minValue={0}
-                  maxValue={activeContext === 'Visit' ? 5000 : 100}
-                />
-              </div>
             </div>
           </div>
         </ChartContainer>

@@ -12,7 +12,7 @@ const AC_GEOJSON = "/ac.geojson";
 
 const IndiaMap = ({
   data,
-  schoolPins = [], // New prop for school locations
+  schoolPins = [],
   onRegionClick,
   currentLevel,
   selectedState,
@@ -47,10 +47,10 @@ const IndiaMap = ({
     loadGeoData();
   }, []);
 
-  // 2. Filter features based on current deep-dive level (Standardized to Lowercase)
+  // 2. Filter features based on current level (Standardized to Lowercase)
   const levelFeatures = useMemo(() => {
     if (!geoData.states || !geoData.acs) return [];
-    if (currentLevel === 'national') return geoData.states.features;
+    if (currentLevel === 'national' || currentLevel === 'country') return geoData.states.features;
 
     const sState = selectedState?.toLowerCase();
     const sDist = selectedDistrict?.toLowerCase();
@@ -71,7 +71,7 @@ const IndiaMap = ({
         f.properties.AC_NAME?.toLowerCase() === sBlock
       );
     }
-    return [];
+    return geoData.states.features;
   }, [currentLevel, selectedState, selectedDistrict, selectedBlock, geoData]);
 
   // 3. Projection & Path Generator
@@ -90,11 +90,12 @@ const IndiaMap = ({
     if (!pathGenerator) return [];
     return levelFeatures.map((feature: any) => {
       const props = feature.properties;
-      const name = currentLevel === 'national' ? (props.ST_NM || props.ST_NAME) :
-                   currentLevel === 'state' ? props.DIST_NAME : props.AC_NAME;
+      const name = (currentLevel === 'national' || currentLevel === 'country') 
+        ? (props.ST_NM || props.ST_NAME) 
+        : currentLevel === 'state' ? props.DIST_NAME : props.AC_NAME;
 
       return {
-        id: feature.id || `${props.AC_NO || props.OBJECTID}-${name}`,
+        id: feature.id || `${props.AC_NO || props.OBJECTID || Math.random()}-${name}`,
         name,
         path: pathGenerator(feature) || '',
       };
@@ -102,7 +103,8 @@ const IndiaMap = ({
   }, [levelFeatures, pathGenerator, currentLevel]);
 
   // 5. Navigation Handlers
-  const handleGoBack = () => {
+  const handleGoBack = (e: React.MouseEvent) => {
+    e.preventDefault();
     const payloads: any = {
       block: { currentLevel: 'district', selectedBlock: null },
       district: { currentLevel: 'state', selectedDistrict: null },
@@ -113,23 +115,47 @@ const IndiaMap = ({
     }
   };
 
+  const handleReset = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dispatch({ type: 'RESET_FILTERS' });
+  };
+
   return (
-    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center overflow-hidden bg-white rounded-xl border border-muted/20 shadow-inner">
+    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center overflow-hidden bg-white rounded-xl">
       
       {/* Back and Reset Buttons */}
       {currentLevel !== 'national' && (
         <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleGoBack} className="h-8 bg-white/90 shadow-sm border-border flex items-center gap-1.5">
+          <Button 
+            type="button"
+            variant="outline" 
+            size="sm" 
+            onClick={handleGoBack} 
+            className="h-8 bg-white/90 shadow-sm border-border flex items-center gap-1.5 hover:bg-white"
+          >
             <ChevronLeft className="h-4 w-4" />
             <span className="text-xs font-medium">Back</span>
           </Button>
-          <Button variant="outline" size="icon" onClick={() => dispatch({ type: 'RESET_FILTERS' })} className="h-8 w-8 bg-white/90 shadow-sm border-border">
+          
+          <Button 
+            type="button"
+            variant="outline" 
+            size="icon" 
+            onClick={handleReset} 
+            className="h-8 w-8 bg-white/90 shadow-sm border-border hover:bg-white"
+            title="Reset to National Level"
+          >
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>
         </div>
       )}
 
-      <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full max-h-full transition-all duration-700 ease-in-out" preserveAspectRatio="xMidYMid meet">
+      <svg 
+        viewBox={`0 0 ${width} ${height}`} 
+        className="w-full h-full max-h-full transition-all duration-700 ease-in-out" 
+        preserveAspectRatio="xMidYMid meet"
+      >
         <g>
           {/* Layer 1: Boundary Shapes */}
           {regions.map((region: any) => (
@@ -138,7 +164,7 @@ const IndiaMap = ({
               region={region}
               data={data.find((d: any) => {
                 const rName = region.name?.toLowerCase();
-                if (currentLevel === 'national') return d.state?.toLowerCase() === rName;
+                if (currentLevel === 'national' || currentLevel === 'country') return d.state?.toLowerCase() === rName;
                 if (currentLevel === 'state') return d.district?.toLowerCase() === rName;
                 return d.block?.toLowerCase() === rName;
               })}
@@ -154,9 +180,8 @@ const IndiaMap = ({
             />
           ))}
 
-          {/* Layer 2: School Dots (Only rendered when projection is ready) */}
+          {/* Layer 2: Visited School Dots (Green) */}
           {projection && schoolPins.map((school: any) => {
-            // Convert [Longitude, Latitude] to [x, y]
             const coords = projection([school.lng, school.lat]);
             if (!coords) return null;
 
@@ -165,18 +190,18 @@ const IndiaMap = ({
                 key={school.id}
                 cx={coords[0]}
                 cy={coords[1]}
-                r={4}
-                className="fill-green-500 stroke-white stroke-[1px] cursor-pointer drop-shadow-sm hover:r-6 transition-all duration-200"
+                r={4.5}
+                className="fill-green-500 stroke-white stroke-[1.5px] cursor-pointer drop-shadow-md transition-all duration-200 hover:r-6"
                 onMouseEnter={(e) => {
                   const rect = containerRef.current?.getBoundingClientRect();
                   if (!rect) return;
                   setTooltip({
                     name: school.name,
                     value: "Visited",
-                    label: school.category || "School",
+                    label: `UDISE: ${school.id}`,
                     x: e.clientX - rect.left,
                     y: e.clientY - rect.top
-                  });
+                  } as any);
                 }}
                 onMouseLeave={() => setTooltip(null)}
               />

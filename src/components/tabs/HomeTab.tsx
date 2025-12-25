@@ -4,21 +4,42 @@ import { useDashboard } from '@/context/DashboardContext';
 import ChartContainer from '@/components/shared/ChartContainer';
 import KPICard from '@/components/shared/KPICard';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, Users, Globe, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function HomeTab() {
   const { state, dispatch } = useDashboard();
-  console.log(state);
-  const { filteredData } = state;
+  const { filteredData, rawData } = state;
 
-  // Aggregate cross-vertical performance for the "Pulse" graph
+  // --- LOGIC: Dynamic KPI Calculations ---
+  
+  // 1. Unique BAC Count (Active BACs)
+  const uniqueBacCount = useMemo(() => {
+    return new Set(rawData.map(r => r.bac_name).filter(Boolean)).size;
+  }, [rawData]);
+
+  // 2. Data Coverage (Unique States)
+  const uniqueStateCount = useMemo(() => {
+    return new Set(rawData.map(r => r.state).filter(Boolean)).size;
+  }, [rawData]);
+
+  // 3. Overall Pulse (Average Achievement across filtered data)
+  const overallPulse = useMemo(() => {
+    const totalActual = filteredData.reduce((s, r) => s + (r.actual_visits || 0), 0);
+    const totalTarget = filteredData.reduce((s, r) => s + (r.target_visits || 0), 0);
+    return totalTarget > 0 ? ((totalActual / totalTarget) * 100).toFixed(1) : "0.0";
+  }, [filteredData]);
+
+  // 4. Aggregate cross-vertical performance for the "Pulse" graph
   const pulseData = useMemo(() => {
     const monthOrder = ['April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March'];
     return monthOrder.map(month => {
       const records = filteredData.filter(r => r.month === month);
-      const visitPerf = records.length ? (records.reduce((s, r) => s + r.actual_visits, 0) / records.reduce((s, r) => s + r.target_visits, 0)) * 100 : 0;
-      return { month, performance: Math.min(visitPerf, 100) };
+      const totalActual = records.reduce((s, r) => s + (r.actual_visits || 0), 0);
+      const totalTarget = records.reduce((s, r) => s + (r.target_visits || 0), 0);
+      
+      const visitPerf = totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0;
+      return { month, performance: Math.round(Math.min(visitPerf, 100)) };
     });
   }, [filteredData]);
 
@@ -34,14 +55,26 @@ export default function HomeTab() {
         <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6 flex flex-col justify-between">
           <div>
             <p className="text-sm font-semibold text-primary uppercase tracking-wider">Overall Pulse</p>
-            <h2 className="text-4xl font-extrabold mt-2">84.2%</h2>
+            <h2 className="text-4xl font-extrabold mt-2">{overallPulse}%</h2>
           </div>
           <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
             <Sparkles className="w-3 h-3" /> System-wide efficiency rating
           </p>
         </div>
-        <KPICard label="Active BACs" value={state.rawData.length / 12} icon="Users" color="info" />
-        <KPICard label="Data Coverage" value="17 States" icon="Globe" color="success" />
+        
+        <KPICard 
+          label="Active BACs" 
+          value={uniqueBacCount} 
+          icon="Users" 
+          color="info" 
+        />
+        
+        <KPICard 
+          label="Data Coverage" 
+          value={`${uniqueStateCount} States`} 
+          icon="Globe" 
+          color="success" 
+        />
       </div>
 
       {/* Aggregate Performance Curve */}
@@ -59,9 +92,18 @@ export default function HomeTab() {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-              <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize: 12}} />
-              <YAxis hide />
+              <XAxis 
+                dataKey="month" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{fontSize: 11, fontWeight: 500}} 
+              />
+              <YAxis 
+                hide 
+                domain={[0, 100]}
+              />
               <Tooltip 
+                formatter={(val) => [`${val}%`, 'Performance']}
                 contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
               />
               <Area 
@@ -84,10 +126,11 @@ export default function HomeTab() {
             <Sparkles className="w-5 h-5 text-primary" /> AI Operational Summary
           </h3>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            Data analysis indicates a 12% improvement in visit adherence across Haryana and Rajasthan. 
-            However, planning gaps remain significant in the December cycle. Recommended action: Review BAC target-setting in underperforming blocks.
+            Data analysis indicates that field execution efficiency is currently at <strong>{overallPulse}%</strong>. 
+            There are <strong>{uniqueBacCount}</strong> active personnel monitoring <strong>{uniqueStateCount}</strong> states. 
+            Recommended action: Review BAC target-setting in underperforming blocks to bridge the current gap.
           </p>
-          <Button variant="outline" size="sm" className="w-fit" onClick={() => dispatch({ type: 'SET_ACTIVE_TAB', payload: 'visit-reports' })}>
+          <Button variant="outline" size="sm" className="w-fit" onClick={() => dispatch({ type: 'SET_ACTIVE_TAB', payload: 'visit-report' })}>
             View Visit Compliance <ArrowRight className="ml-2 w-4 h-4" />
           </Button>
         </div>
