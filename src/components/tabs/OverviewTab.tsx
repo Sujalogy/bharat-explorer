@@ -37,7 +37,7 @@ export default function OverviewTab() {
 
   useEffect(() => {
     if (mapState.currentLevel === 'block' && mapState.selectedBlock) {
-      fetch(`http://localhost:3001/schools?block=${mapState.selectedBlock}`)
+      fetch(`http://localhost:3000/api/schools?block=${mapState.selectedBlock}`)
         .then(res => res.json())
         .then(data => setBlockSchools(data))
         .catch(() => setBlockSchools([]));

@@ -50,6 +50,7 @@ export interface User {
 }
 
 export interface DashboardState {
+  Visit : any[];
   user: User | null;
   filters: DashboardFilters;
   thresholds: Thresholds;
@@ -65,6 +66,8 @@ export interface DashboardState {
 export interface DashboardFilters {
   academicYear: string;
   state: string;
+  subject: string;
+  grade: string;
   district: string;
   block: string;
   bacId: string;
@@ -76,7 +79,7 @@ export interface Thresholds {
 }
 
 export interface MapState {
-  currentLevel: 'national' | 'state' | 'district' | 'block';
+  currentLevel: 'national' | 'state' | 'district' | 'block' | 'country';
   selectedState: string | null;
   selectedDistrict: string | null;
   selectedBlock: string | null;

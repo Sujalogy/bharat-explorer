@@ -15,7 +15,7 @@ export default function CROTab() {
   const [subTab, setSubTab] = useState('compliance');
 
   useEffect(() => {
-    fetch('http://localhost:3001/cro')
+    fetch('http://localhost:3000/cro')
       .then(res => res.json())
       .then(data => setCroData(data));
   }, []);

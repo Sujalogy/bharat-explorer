@@ -42,7 +42,7 @@ const MapViewer = () => {
       groups[key].rec += record.recommended_visits || 0;
       groups[key].obs += record.classroom_obs || 0;
       groups[key].schools.add(record.school_id);
-      groups[key].bacs.add(record.bac_id);
+      groups[key].bacs.add(record.bac_name);
     });
 
     return Object.values(groups).map(g => ({

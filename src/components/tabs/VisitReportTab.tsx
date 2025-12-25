@@ -34,12 +34,12 @@ export default function VisitReportTab() {
 
     // BACs who missed their target (Actual < Target)
     const missedTargetBacs = new Set(
-      filteredData.filter(d => d.actual_visits < d.target_visits).map(d => d.bac_id)
+      filteredData.filter(d => d.actual_visits < d.target_visits).map(d => d.bac_name)
     ).size;
 
     // BACs who fluctuate their targets (Target != Recommended Policy)
     const fluctuatedTargetBacs = new Set(
-      filteredData.filter(d => d.target_visits !== d.recommended_visits).map(d => d.bac_id)
+      filteredData.filter(d => d.target_visits !== d.recommended_visits).map(d => d.bac_name)
     ).size;
 
     // 2. Aggregate Chart Data based on Toggle

@@ -34,10 +34,10 @@ export function usePlanningMetrics(data: VisitRecord[], threshold: number): Plan
     // Group by BAC
     const bacGroups: Record<string, VisitRecord[]> = {};
     data.forEach(record => {
-      if (!bacGroups[record.bac_id]) {
-        bacGroups[record.bac_id] = [];
+      if (!bacGroups[record.bac_name]) {
+        bacGroups[record.bac_name] = [];
       }
-      bacGroups[record.bac_id].push(record);
+      bacGroups[record.bac_name].push(record);
     });
 
     // Calculate chronic planners
@@ -94,7 +94,7 @@ export function usePlanningMetrics(data: VisitRecord[], threshold: number): Plan
       .map((month, index) => {
         const records = monthlyGroups[month];
         const underplannedCount = new Set(
-          records.filter(r => r.target_visits < r.recommended_visits).map(r => r.bac_id)
+          records.filter(r => r.target_visits < r.recommended_visits).map(r => r.bac_name)
         ).size;
         return { month, monthIndex: index, value: underplannedCount };
       });
@@ -126,7 +126,7 @@ export function usePlanningMetrics(data: VisitRecord[], threshold: number): Plan
         return {
           state,
           value: stateRecommended > 0 ? (stateTarget / stateRecommended) * 100 : 0,
-          count: new Set(records.map(r => r.bac_id)).size
+          count: new Set(records.map(r => r.bac_name)).size
         };
       })
       .sort((a, b) => b.value - a.value);

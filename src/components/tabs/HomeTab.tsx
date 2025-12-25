@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 
 export default function HomeTab() {
   const { state, dispatch } = useDashboard();
+  console.log(state);
   const { filteredData } = state;
 
   // Aggregate cross-vertical performance for the "Pulse" graph

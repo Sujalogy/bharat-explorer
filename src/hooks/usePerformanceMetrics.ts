@@ -30,10 +30,10 @@ export function usePerformanceMetrics(data: VisitRecord[], threshold: number): P
     // Group by BAC
     const bacGroups: Record<string, VisitRecord[]> = {};
     data.forEach(record => {
-      if (!bacGroups[record.bac_id]) {
-        bacGroups[record.bac_id] = [];
+      if (!bacGroups[record.bac_name]) {
+        bacGroups[record.bac_name] = [];
       }
-      bacGroups[record.bac_id].push(record);
+      bacGroups[record.bac_name].push(record);
     });
 
     // Calculate chronic performers
@@ -91,7 +91,7 @@ export function usePerformanceMetrics(data: VisitRecord[], threshold: number): P
       .map((month, index) => {
         const records = monthlyGroups[month];
         const missedCount = new Set(
-          records.filter(r => r.actual_visits < r.target_visits).map(r => r.bac_id)
+          records.filter(r => r.actual_visits < r.target_visits).map(r => r.bac_name)
         ).size;
         return { month, monthIndex: index, value: missedCount };
       });
@@ -123,7 +123,7 @@ export function usePerformanceMetrics(data: VisitRecord[], threshold: number): P
         return {
           state,
           value: stateTarget > 0 ? (stateActual / stateTarget) * 100 : 0,
-          count: new Set(records.map(r => r.bac_id)).size
+          count: new Set(records.map(r => r.bac_name)).size
         };
       })
       .sort((a, b) => b.value - a.value);
