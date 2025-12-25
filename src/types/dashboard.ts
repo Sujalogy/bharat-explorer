@@ -59,6 +59,7 @@ export interface DashboardState {
   activeTab: string; // home, overview, visit-report, cro, tlm, slo, school-profile, teacher-profile
   sidebarCollapsed: boolean;
   darkMode: boolean;
+  activeContext: 'Visit' | 'SLO' | 'CRO' | 'TLM';
 }
 
 export interface DashboardFilters {

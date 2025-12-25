@@ -3,7 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { cn } from '@/lib/utils';
 
 interface ChartContainerProps {
-  title: string;
+  title: ReactNode;
   description?: string;
   children: ReactNode;
   className?: string;

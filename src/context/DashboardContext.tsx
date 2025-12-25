@@ -18,6 +18,7 @@ type DashboardAction =
   | { type: 'SET_FILTERS'; payload: Partial<DashboardFilters> }
   | { type: 'SET_MAP_STATE'; payload: Partial<MapState> }
   | { type: 'SET_ACTIVE_TAB'; payload: string }
+  | { type: 'SET_CONTEXT'; payload: 'Visit' | 'SLO' | 'CRO' | 'TLM' }
   | { type: 'RESET_FILTERS' }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'TOGGLE_DARK_MODE' };
@@ -31,7 +32,8 @@ const initialState: DashboardState = {
   thresholds: { chronicPerformance: 3, chronicPlanning: 3 },
   sidebarCollapsed: false,
   darkMode: false,
-  user: undefined
+  user: undefined,
+  activeContext: 'Visit',
 };
 
 function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
@@ -41,6 +43,9 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
 
     case 'SET_ACTIVE_TAB':
       return { ...state, activeTab: action.payload };
+
+    case 'SET_CONTEXT':
+      return { ...state, activeContext: action.payload };
 
     case 'SET_FILTERS': {
       const newFilters = { ...state.filters, ...action.payload };

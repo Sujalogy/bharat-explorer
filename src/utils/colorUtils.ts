@@ -2,26 +2,15 @@
 export const getMetricColor = (value: number, min: number = 0, max: number = 100): string => {
   const normalized = Math.max(0, Math.min(1, (value - min) / (max - min)));
   
-  // Red (0) -> Yellow (0.5) -> Green (1)
-  let r: number, g: number, b: number;
-  
-  if (normalized < 0.5) {
-    // Red to Yellow
-    const t = normalized * 2;
-    r = 239; // Red stays high
-    g = Math.round(68 + (190 - 68) * t); // 68 to 190
-    b = Math.round(68 + (43 - 68) * t); // 68 to 43
-  } else {
-    // Yellow to Green
-    const t = (normalized - 0.5) * 2;
-    r = Math.round(234 + (34 - 234) * t); // 234 to 34
-    g = Math.round(179 + (197 - 179) * t); // 179 to 197
-    b = Math.round(8 + (94 - 8) * t); // 8 to 94
-  }
+  // Interpolation between #fdd6db (Light Pink) and #b31820 (Deep Red)
+  // Low: RGB(253, 214, 219)
+  // High: RGB(179, 24, 32)
+  const r = Math.round(253 + (179 - 253) * normalized);
+  const g = Math.round(214 + (24 - 214) * normalized);
+  const b = Math.round(219 + (32 - 219) * normalized);
   
   return `rgb(${r}, ${g}, ${b})`;
 };
-
 // Get a lighter version for hover state
 export const getLighterColor = (color: string, factor: number = 0.15): string => {
   const match = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
