@@ -45,6 +45,10 @@
 
     --radius: 0.5rem;
 
+    --metric-low: 353 87% 92%;    /* Light Pinkish-Red (#fdd6db) */
+    --metric-medium: 355 80% 66%; /* Interpolated Midpoint */
+    --metric-high: 357 76% 41%;   /* Deep Red (#b31820) */    
+
     /* Map specific tokens */
     --map-bg: 220 20% 97%;
     --map-border: 220 13% 75%;
@@ -308,4 +312,12 @@
 .kpi-card:hover {
   @apply shadow-md;
   transform: translateY(-2px);
+}
+
+.gradient-legend {
+  background: linear-gradient(
+    to right,
+    hsl(var(--metric-low)),
+    hsl(var(--metric-high))
+  );
 }

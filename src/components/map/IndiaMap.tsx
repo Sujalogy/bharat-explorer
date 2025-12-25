@@ -100,7 +100,7 @@ const IndiaMap = ({
   };
 
   return (
-    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center p-4 overflow-hidden bg-white rounded-lg border">
+    <div ref={containerRef} className="relative h-full w-full flex items-center justify-center overflow-hidden bg-white">
 
       {/* Back and Reset Buttons */}
       {currentLevel !== 'national' && (

@@ -17,7 +17,7 @@ const MapBreadcrumb = ({
   onNavigate 
 }: MapBreadcrumbProps) => {
   return (
-    <nav className="flex items-center gap-1 text-xs mb-4 bg-muted/30 p-2 rounded-lg border border-border/50">
+    <nav className="flex items-center gap-1 text-xs rounded-lg">
       <button
         onClick={() => onNavigate('national')}
         className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${

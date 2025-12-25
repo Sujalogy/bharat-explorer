@@ -1,10 +1,11 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useDashboard } from '@/context/DashboardContext';
 import IndiaMap from '@/components/map/IndiaMap';
+import MapLegend from '@/components/map/MapLegend'; // Ensure this is imported
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { 
-  Globe, Landmark, Building2, MapPin, Box, 
-  CheckCircle2, GraduationCap, Microscope, ClipboardList 
+import {
+  Globe, Landmark, Building2, MapPin, Box,
+  CheckCircle2, GraduationCap, Microscope, ClipboardList
 } from 'lucide-react';
 import ChartContainer from '@/components/shared/ChartContainer';
 import { getGeoMetrics } from '@/utils/geoMetrics';
@@ -45,7 +46,6 @@ export default function OverviewTab() {
     }
   }, [mapState.currentLevel, mapState.selectedBlock]);
 
-  // Metric calculation based on active context
   const calculateMetric = (data: any[], context: MetricContext) => {
     if (!data || data.length === 0) return 0;
     switch (context) {
@@ -75,16 +75,11 @@ export default function OverviewTab() {
       const metrics = getGeoMetrics(name);
 
       return {
-        name,
-        achievement,
-        visits,
-        obs,
+        name, achievement, visits, obs,
         schools_covered: uniqueSchools,
         total_schools_master: metrics.total_schools,
         area: metrics.area_sqkm,
-        contextValue: activeContext === 'Visit' ? visits : 
-                      activeContext === 'CRO' ? obs : 
-                      Math.round(achievement)
+        contextValue: activeContext === 'Visit' ? visits : activeContext === 'CRO' ? obs : Math.round(achievement)
       };
     };
 
@@ -110,38 +105,61 @@ export default function OverviewTab() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 p-4 h-[calc(100vh-120px)] overflow-hidden">
-      
-      {/* MAIN MAP AREA */}
+    <div className="flex flex-col lg:flex-row gap-4 p-4 h-[calc(100vh-109px)] overflow-hidden">
       <div className="flex-1 min-h-0 flex flex-col">
         <ChartContainer
           title={
-            <div className="flex items-center justify-between w-full pr-4 gap-4">
-              <span className="text-sm font-bold truncate">
-                {activeContext} Analytics: {mapState.currentLevel === 'national' ? "All India" : (mapState.selectedState || 'State')}
-              </span>
-              <Tabs value={activeContext} onValueChange={(val) => setActiveContext(val as MetricContext)}>
-                <TabsList className="h-8 bg-muted/50 border border-muted-foreground/10">
-                  <TabsTrigger value="SLO" className="text-[10px] px-3"><GraduationCap className="w-3 h-3 mr-1" /> SLO</TabsTrigger>
-                  <TabsTrigger value="TLM" className="text-[10px] px-3"><Microscope className="w-3 h-3 mr-1" /> TLM</TabsTrigger>
-                  <TabsTrigger value="CRO" className="text-[10px] px-3"><ClipboardList className="w-3 h-3 mr-1" /> CRO</TabsTrigger>
-                  <TabsTrigger value="Visit" className="text-[10px] px-3"><CheckCircle2 className="w-3 h-3 mr-1" /> Visit</TabsTrigger>
-                </TabsList>
-              </Tabs>
+            <div className='w-[1200px] flex text-center align-middle justify-between items-center'>
+              <div className="flex items-center w-full pr-4 gap-4">
+                <Tabs
+                  value={activeContext}
+                  onValueChange={(val) => setActiveContext(val as MetricContext)}
+                  className="w-auto"
+                >
+                  <TabsList className="bg-white gap-1">
+                    {[
+                      { id: 'SLO', icon: GraduationCap, label: 'SLO' },
+                      { id: 'TLM', icon: Microscope, label: 'TLM' },
+                      { id: 'CRO', icon: ClipboardList, label: 'CRO' },
+                      { id: 'Visit', icon: CheckCircle2, label: 'Visit' }
+                    ].map((tab) => (
+                      <TabsTrigger
+                        key={tab.id}
+                        value={tab.id}
+                        className="
+          relative px-4 py-1.5 text-[11px] font-semibold tracking-wide uppercase transition-all duration-300 ease-out
+          data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-sm
+          data-[state=active]:ring-1 data-[state=active]:ring-primary/10 rounded-lg
+          hover:bg-background/50 hover:text-foreground
+          flex items-center gap-2 border
+        "
+                      >
+                        <tab.icon className={`w-3.5 h-3.5 transition-transform duration-300 ${activeContext === tab.id ? 'scale-110' : 'opacity-70'}`} />
+                        <span>{tab.label}</span>
+                      </TabsTrigger>
+                    ))}
+                  </TabsList>
+                </Tabs>
+                <MapBreadcrumb
+                  currentLevel={mapState.currentLevel}
+                  selectedState={mapState.selectedState}
+                  selectedDistrict={mapState.selectedDistrict}
+                  selectedBlock={mapState.selectedBlock}
+                  onNavigate={handleBreadcrumbNavigate}
+                />
+              </div>
+              <div className="">
+                <span className="text-sm font-bold truncate">
+                  {activeContext} : {mapState.currentLevel === 'national' ? "All India" : (mapState.selectedState || 'State')}
+                </span>
+              </div>
             </div>
           }
           className="flex-1"
         >
-          <div className="h-full w-full flex flex-col p-4">
-            <MapBreadcrumb
-              currentLevel={mapState.currentLevel}
-              selectedState={mapState.selectedState}
-              selectedDistrict={mapState.selectedDistrict}
-              selectedBlock={mapState.selectedBlock}
-              onNavigate={handleBreadcrumbNavigate}
-            />
-            
-            <div className="h-[600px]">
+          <div className="h-full w-full flex flex-col p-4 relative"> {/* Added relative here */}
+
+            <div className="h-[calc(90vh-160px)] relative"> {/* Added relative here */}
               <IndiaMap
                 data={filteredData.map((d: any) => ({
                   ...d,
@@ -155,22 +173,21 @@ export default function OverviewTab() {
                 selectedBlock={mapState.selectedBlock}
                 colorMetric="achievement"
               />
-              
-              {/* Floating Legend Inside Map Area */}
-              <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur p-2 rounded border shadow-sm z-10">
-                <p className="text-[9px] font-bold text-muted-foreground uppercase mb-1">{activeContext} Performance</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-[8px] text-muted-foreground">0%</span>
-                  <div className="w-24 h-2 rounded bg-gradient-to-r from-[#fdd6db] to-[#b31820]" />
-                  <span className="text-[8px] text-muted-foreground">100%</span>
-                </div>
+
+              {/* Using the shared Legend Component */}
+              <div className="absolute bottom-6 left-6 z-20">
+                <MapLegend
+                  colorMetric={activeContext === 'Visit' ? 'visits' : 'achievement'}
+                  minValue={0}
+                  maxValue={activeContext === 'Visit' ? 5000 : 100}
+                />
               </div>
             </div>
           </div>
         </ChartContainer>
       </div>
 
-      {/* RIGHT SIDEBAR (Region Breakdown) */}
+      {/* Hierarchy Overview sidebar remains same */}
       <div className="lg:w-80 flex flex-col min-h-0">
         <Card className="flex-1 flex flex-col border-muted/40 bg-card/50 backdrop-blur-sm shadow-lg overflow-hidden">
           <CardHeader className="py-3 border-b shrink-0">
