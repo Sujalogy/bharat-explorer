@@ -1,14 +1,17 @@
-// ============================================
-// FILE 2: src/components/map/MapRegion.tsx
-// ============================================
-
-import { Region, RegionData } from '@/types/map';
-import { getMetricColor, getLighterColor } from '@/utils/colorUtils';
 import { useState } from 'react';
+import { getMetricColor, getLighterColor } from '@/utils/colorUtils';
 
 interface MapRegionProps {
-  region: Region;
-  data?: RegionData;
+  region: {
+    id: string | number;
+    name: string;
+    path: string;
+  };
+  data?: {
+    achievement?: number;
+    visits?: number;
+    planning?: number;
+  };
   colorMetric: 'achievement' | 'visits' | 'planning';
   colorScale: [number, number];
   isSelected: boolean;
@@ -16,28 +19,36 @@ interface MapRegionProps {
   onHover: (data: any | null) => void;
 }
 
-const MapRegion = ({ region, data, colorMetric, colorScale, isSelected, onClick, onHover }: MapRegionProps) => {
+const MapRegion = ({ 
+  region, 
+  data, 
+  colorMetric, 
+  colorScale, 
+  isSelected, 
+  onClick, 
+  onHover 
+}: MapRegionProps) => {
   const [isHovered, setIsHovered] = useState(false);
   
   const getValue = () => {
     if (!data) return null;
     switch (colorMetric) {
-      case 'achievement': return data.achievement;
-      case 'visits': return data.visits;
+      case 'achievement': return data.achievement ?? 0;
+      case 'visits': return data.visits ?? 0;
       case 'planning': return data.planning ?? 0;
       default: return 0;
     }
   };
   
   const val = getValue();
-  const min = colorScale?.[0] ?? 0;
-  const max = colorScale?.[1] ?? 100;
+  const [min, max] = colorScale;
   
+  // Get the RGY Interpolated Color
   const baseColor = val !== null 
     ? getMetricColor(val, min, max) 
-    : 'rgba(240, 240, 240, 0.5)'; // Light gray for no data
+     : 'rgba(240, 240, 240, 0.5)';// Tailwind gray-100 for no data
   
-  const hoverColor = val !== null ? getLighterColor(baseColor, 0.2) : 'rgba(220, 220, 220, 0.7)';
+ const hoverColor = val !== null ? getLighterColor(baseColor, 0.15) : 'rgb(229, 231, 235)';
   const fillColor = isHovered ? hoverColor : baseColor;
   
   return (
@@ -45,9 +56,11 @@ const MapRegion = ({ region, data, colorMetric, colorScale, isSelected, onClick,
       d={region.path}
       fill={fillColor}
       stroke="black"
-      strokeWidth={isSelected ? 2 : isHovered ? 1.5 : 0.8}
+      strokeWidth={isSelected ? 1.8 : isHovered ? 1 : 0.4}
+      strokeLinejoin="round"
+      vectorEffect="non-scaling-stroke"
       strokeOpacity={1}
-      className={`transition-all duration-200 ${val !== null ? 'cursor-pointer' : 'cursor-default'}`}
+      className={`transition-colors duration-300 ease-in-out ${val !== null ? 'cursor-pointer' : 'cursor-default'}`}
       onClick={() => val !== null && onClick()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseMove={(e) => onHover({

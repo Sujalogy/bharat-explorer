@@ -2,6 +2,15 @@
  * src/utils/geoMetrics.ts
  * Geographic and School infrastructure metadata for India
  */
+// src/utils/colorUtils.ts
+import { interpolateRgb } from 'd3-interpolate';
+
+/**
+ * Generates a high-contrast RGY color string based on a value.
+ * @param value The metric value (e.g., 75 for 75%)
+ * @param min Minimum scale value (usually 0)
+ * @param max Maximum scale value (usually 100)
+ */
 
 export interface GeoMetricData {
   area_sqkm: number;
@@ -78,7 +87,32 @@ export const GEO_METRICS: Record<string, GeoMetricData> = {
  * Helper to fetch data safely with a fallback
  */
 export const getGeoMetrics = (name: string): GeoMetricData => {
-  // Normalize the lookup key to match your GEO_METRICS object
+  // Safety check for undefined names to prevent .charAt error
+  if (!name || name === "Unknown") {
+    return { area_sqkm: 0, population_density: 0, total_schools: 0 };
+  }
   const lookupName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(); 
   return GEO_METRICS[lookupName] || { area_sqkm: 0, population_density: 0, total_schools: 0 };
 };
+
+
+export const getMetricColor = (value: number, min: number = 0, max: number = 100): string => {
+  if (value === null || value === undefined) return 'rgb(240, 242, 245)'; // Neutral Light Gray
+
+  // Normalize value to 0-100 scale
+  const percentage = ((value - min) / (max - min)) * 100;
+
+  // High-Contrast RGB definitions
+  const R = "rgb(239, 68, 68)";  // Vibrant Coral/Red
+  const Y = "rgb(234, 179, 8)";  // Deep Amber/Yellow
+  const G = "rgb(21, 128, 61)";   // Forest Green
+
+  if (percentage < 50) {
+    // Interpolate Red to Yellow (0% to 50%)
+    return interpolateRgb(R, Y)(percentage / 50);
+  } else {
+    // Interpolate Yellow to Green (50% to 100%)
+    return interpolateRgb(Y, G)((percentage - 50) / 50);
+  }
+};
+

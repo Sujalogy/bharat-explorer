@@ -1,8 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
 @layer base {
   :root {
@@ -45,9 +44,9 @@
 
     --radius: 0.5rem;
 
-    --metric-low: 353 87% 92%;    /* Light Pinkish-Red (#fdd6db) */
-    --metric-medium: 355 80% 66%; /* Interpolated Midpoint */
-    --metric-high: 357 76% 41%;   /* Deep Red (#b31820) */    
+    --metric-low: 0 84% 60%; /* #ef4444 - Low */
+    --metric-medium: 45 93% 47%; /* #eab308 - Mid */
+    --metric-high: 142 72% 29%; /* #15803d - High */
 
     /* Map specific tokens */
     --map-bg: 220 20% 97%;
@@ -57,16 +56,18 @@
     --map-region-hover: 220 20% 85%;
     --map-region-selected: 226 71% 50%;
     --map-water: 199 89% 94%;
-    
+
     /* Metric gradient colors */
     --metric-low: 0 84% 60%;
     --metric-medium: 38 92% 50%;
     --metric-high: 142 71% 45%;
-    
+
     /* Shadows */
     --shadow-sm: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1), 0 2px 4px -2px hsl(222 47% 11% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1), 0 4px 6px -4px hsl(222 47% 11% / 0.1);
+    --shadow-md: 0 4px 6px -1px hsl(222 47% 11% / 0.1),
+      0 2px 4px -2px hsl(222 47% 11% / 0.1);
+    --shadow-lg: 0 10px 15px -3px hsl(222 47% 11% / 0.1),
+      0 4px 6px -4px hsl(222 47% 11% / 0.1);
     --shadow-glow: 0 0 20px hsl(226 71% 50% / 0.3);
 
     /* Sidebar */
@@ -155,13 +156,13 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
   }
 }
 
 @layer utilities {
   .font-mono {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: "JetBrains Mono", monospace;
   }
 }
 
@@ -209,7 +210,8 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     filter: drop-shadow(0 0 2px hsl(var(--map-region-selected) / 0.5));
   }
   50% {
@@ -318,6 +320,7 @@
   background: linear-gradient(
     to right,
     hsl(var(--metric-low)),
+    hsl(var(--metric-medium)),
     hsl(var(--metric-high))
   );
 }
