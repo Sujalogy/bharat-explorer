@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
-import { Search, X } from 'lucide-react';
-import { indiaStates } from '@/data/indiaStates';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { Search, X, MapPin } from 'lucide-react';
+import { useDashboard, VisitRecord } from '@/context/DashboardContext';
 
 interface MapSearchProps {
   onSelect: (type: 'state' | 'district' | 'block', name: string, state?: string, district?: string) => void;
@@ -8,20 +8,64 @@ interface MapSearchProps {
 
 interface SearchResult {
   type: 'state' | 'district' | 'block';
-  name: string;
+  name: string; // Made required to match onSelect
   state?: string;
   district?: string;
 }
 
+// Internal interfaces for the search source data
+interface SearchSourceItem {
+  name: string;
+  state: string;
+  district?: string;
+}
+
 const MapSearch = ({ onSelect }: MapSearchProps) => {
+  const { state: dashboardState } = useDashboard();
+  const rawData: VisitRecord[] = dashboardState.rawData || [];
+
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [results, setResults] = useState<SearchResult[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // 1. Pre-calculate unique search metadata from the API data
+  const searchSources = useMemo(() => {
+    if (!rawData || rawData.length === 0) return { states: [], districts: [], blocks: [] };
+
+    // Explicitly cast to string[] to avoid 'unknown' type issues
+    const states = Array.from(new Set(rawData.map(d => d.state as string))).filter(Boolean);
+    
+    const districtsMap = new Map<string, SearchSourceItem>();
+    const blocksMap = new Map<string, SearchSourceItem>();
+
+    rawData.forEach(d => {
+      if (d.district) {
+        districtsMap.set(d.district.toLowerCase(), { 
+          name: d.district as string, 
+          state: d.state as string 
+        });
+      }
+      if (d.block) {
+        blocksMap.set(`${d.district}-${d.block}`.toLowerCase(), { 
+          name: d.block as string, 
+          district: d.district as string, 
+          state: d.state as string 
+        });
+      }
+    });
+
+    return {
+      states,
+      districts: Array.from(districtsMap.values()),
+      blocks: Array.from(blocksMap.values())
+    };
+  }, [rawData]);
+
+  // 2. Perform search logic
   useEffect(() => {
-    if (!query.trim()) {
+    if (!query.trim() || query.length < 2) {
       setResults([]);
       return;
     }
@@ -29,15 +73,29 @@ const MapSearch = ({ onSelect }: MapSearchProps) => {
     const lowerQuery = query.toLowerCase();
     const allResults: SearchResult[] = [];
 
-    // Search states
-    indiaStates.forEach(state => {
-      if (state.name.toLowerCase().includes(lowerQuery)) {
-        allResults.push({ type: 'state', name: state.name });
+    // Search States
+    searchSources.states.forEach((sName: string) => {
+      if (sName.toLowerCase().includes(lowerQuery)) {
+        allResults.push({ type: 'state', name: sName });
+      }
+    });
+
+    // Search Districts
+    searchSources.districts.forEach((d: SearchSourceItem) => {
+      if (d.name.toLowerCase().includes(lowerQuery)) {
+        allResults.push({ type: 'district', name: d.name, state: d.state });
+      }
+    });
+
+    // Search Blocks
+    searchSources.blocks.forEach((b: SearchSourceItem) => {
+      if (b.name.toLowerCase().includes(lowerQuery)) {
+        allResults.push({ type: 'block', name: b.name, state: b.state, district: b.district });
       }
     });
 
     setResults(allResults.slice(0, 8));
-  }, [query]);
+  }, [query, searchSources]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -55,15 +113,6 @@ const MapSearch = ({ onSelect }: MapSearchProps) => {
     setIsOpen(false);
   };
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'state': return 'State';
-      case 'district': return 'District';
-      case 'block': return 'Block';
-      default: return '';
-    }
-  };
-
   return (
     <div ref={containerRef} className="relative">
       <div className="relative">
@@ -77,11 +126,12 @@ const MapSearch = ({ onSelect }: MapSearchProps) => {
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          placeholder="Search state, district, or block..."
-          className="w-64 pl-9 pr-9 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"
+          placeholder="Search locations..."
+          className="w-72 pl-9 pr-9 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
         />
         {query && (
           <button
+            type="button"
             onClick={() => {
               setQuery('');
               inputRef.current?.focus();
@@ -94,28 +144,34 @@ const MapSearch = ({ onSelect }: MapSearchProps) => {
       </div>
 
       {isOpen && results.length > 0 && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-card border border-border rounded-lg shadow-lg overflow-hidden z-50 animate-scale-in">
-          {results.map((result, index) => (
-            <button
-              key={`${result.type}-${result.name}-${index}`}
-              onClick={() => handleSelect(result)}
-              className="w-full px-4 py-2.5 text-left hover:bg-muted transition-colors flex items-center justify-between group"
-            >
-              <div>
-                <span className="text-sm text-foreground group-hover:text-primary transition-colors">
-                  {result.name}
+        <div className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-xl overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-200">
+          <div className="max-h-[300px] overflow-y-auto">
+            {results.map((result, index) => (
+              <button
+                key={`${result.type}-${result.name}-${index}`}
+                onClick={() => handleSelect(result)}
+                className="w-full px-4 py-2.5 text-left hover:bg-accent hover:text-accent-foreground transition-colors flex items-center justify-between group border-b border-border/50 last:border-0"
+              >
+                <div className="flex flex-col text-left">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium capitalize">
+                      {result.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5 text-left">
+                    <MapPin className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-tight">
+                      {result.type === 'block' && result.district ? `${result.district}, ` : ''}
+                      {result.state || 'India'}
+                    </span>
+                  </div>
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 bg-muted text-muted-foreground rounded border border-border">
+                  {result.type}
                 </span>
-                {result.state && (
-                  <span className="text-xs text-muted-foreground ml-2">
-                    {result.district ? `${result.district}, ${result.state}` : result.state}
-                  </span>
-                )}
-              </div>
-              <span className="text-xs px-2 py-0.5 bg-secondary text-secondary-foreground rounded">
-                {getTypeLabel(result.type)}
-              </span>
-            </button>
-          ))}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>

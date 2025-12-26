@@ -78,9 +78,7 @@ export const GEO_METRICS: Record<string, GeoMetricData> = {
  * Helper to fetch data safely with a fallback
  */
 export const getGeoMetrics = (name: string): GeoMetricData => {
-  return GEO_METRICS[name] || {
-    area_sqkm: 0,
-    population_density: 0,
-    total_schools: 0
-  };
+  // Normalize the lookup key to match your GEO_METRICS object
+  const lookupName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase(); 
+  return GEO_METRICS[lookupName] || { area_sqkm: 0, population_density: 0, total_schools: 0 };
 };
