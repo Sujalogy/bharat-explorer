@@ -1,11 +1,13 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useDashboard, VisitRecord } from '@/context/DashboardContext';
+import { useDashboard } from '@/context/DashboardContext';
 import IndiaMap from '@/components/map/IndiaMap';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
-  Globe, Landmark, Building2, MapPin, Box,
+  Globe, Landmark, Building2, Box,
   CheckCircle2, GraduationCap, Microscope, ClipboardList,
-  Target, Activity, Eye, School, BookOpen, Calculator
+  Target, Activity, Eye, School, BookOpen, Calculator,
+  TrendingUp, BarChart3, Layers,
+  MapPin
 } from 'lucide-react';
 import ChartContainer from '@/components/shared/ChartContainer';
 import { getGeoMetrics } from '@/utils/geoMetrics';
@@ -69,6 +71,8 @@ export default function OverviewTab() {
     const actual = data.reduce((s, r) => s + (r.actual_visits || 0), 0);
     const target = data.reduce((s, r) => s + (r.target_visits || 0), 0);
     const obs = data.reduce((s, r) => s + (r.classroom_obs || 0), 0);
+    const avgSlo = data.length > 0 ? data.reduce((s, r) => s + (r.slo_score || 0), 0) / data.length : 0;
+    const tlmUsage = data.length > 0 ? data.reduce((s, r) => s + (r.tlm_score || 0), 0) / data.length : 0;
 
     const practiceCounts = {
       ss2: 0, ss3: 0,
@@ -93,10 +97,11 @@ export default function OverviewTab() {
     const getPerc = (count: number) => totalRecords > 0 ? (count / totalRecords) * 100 : 0;
 
     return {
-      level, name, actual, target, obs,
+      level, name, actual, target, obs, avgSlo, tlmUsage,
       schools: schoolsCovered,
       totalSchools: geo.total_schools,
       achievement: target > 0 ? (actual / target) * 100 : 0,
+      area: geo.area_sqkm,
       practices: {
         ss2: getPerc(practiceCounts.ss2),
         ss3: getPerc(practiceCounts.ss3),
@@ -126,13 +131,13 @@ export default function OverviewTab() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 p-4 h-[calc(100vh-109px)] overflow-hidden">
-      
+
       {/* 70% MAP SECTION */}
       <div className="lg:w-[70%] min-h-0 flex flex-col">
         <ChartContainer
           title={
-            <div className='flex items-center justify-between w-full'>
-              <div className="flex items-center gap-4">
+            <div className='grid grid-flow-col items-center'>
+              <div className="grid grid-flow-col justify-between items-center gap-4">
                 <Tabs value={activeContext} onValueChange={(val) => setActiveContext(val as MetricContext)} className="w-auto">
                   <TabsList className="bg-white gap-1">
                     {[
@@ -148,13 +153,25 @@ export default function OverviewTab() {
                     ))}
                   </TabsList>
                 </Tabs>
-                <MapBreadcrumb
-                  currentLevel={mapState.currentLevel}
-                  selectedState={mapState.selectedState}
-                  selectedDistrict={mapState.selectedDistrict}
-                  selectedBlock={mapState.selectedBlock}
-                  onNavigate={handleBreadcrumbNavigate}
-                />
+                <div className="w-[700px] flex items-center justify-between gap-3">
+                  <MapBreadcrumb
+                    currentLevel={mapState.currentLevel}
+                    selectedState={mapState.selectedState}
+                    selectedDistrict={mapState.selectedDistrict}
+                    selectedBlock={mapState.selectedBlock}
+                    onNavigate={handleBreadcrumbNavigate}
+                  />
+
+                  {/* NEW: Area Indicator in the top right of the header section */}
+                  {currentFocus.area > 0 && (
+                    <div className="flex items-center gap-1.5 px-3 border border-slate-200 rounded-full shadow-sm">
+                      <MapPin className="w-3 h-3 text-slate-500" />
+                      <span className="text-[11px] font-bold text-slate-700 whitespace-nowrap">
+                        {currentFocus.area.toLocaleString()} km²
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           }
@@ -179,96 +196,143 @@ export default function OverviewTab() {
         </ChartContainer>
       </div>
 
-      {/* 30% SIDE CARD */}
+      {/* 30% DYNAMIC SIDE CARD */}
       <div className="lg:w-[30%] flex flex-col min-h-0">
         <Card className="flex-1 overflow-hidden flex flex-col shadow-lg border-muted/40">
           <CardHeader className="py-4 border-b bg-slate-50">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">
-                Level: {currentFocus.level}
+                Context: {activeContext} | Level: {currentFocus.level}
               </span>
             </div>
             <CardTitle className="text-xl font-bold capitalize flex items-center gap-2">
-              {currentFocus.level === 'national' ? <Globe className="w-5 h-5 text-blue-500" /> : 
-               currentFocus.level === 'state' ? <Landmark className="w-5 h-5 text-indigo-500" /> :
-               currentFocus.level === 'district' ? <Building2 className="w-5 h-5 text-teal-500" /> : <Box className="w-5 h-5" />}
+              {activeContext === 'Visit' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+              {activeContext === 'CRO' && <ClipboardList className="w-5 h-5 text-blue-500" />}
+              {activeContext === 'SLO' && <GraduationCap className="w-5 h-5 text-indigo-500" />}
+              {activeContext === 'TLM' && <Microscope className="w-5 h-5 text-amber-500" />}
               {currentFocus.name}
             </CardTitle>
           </CardHeader>
 
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-hide">
-            {/* 1. Visit Adherence */}
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
-                <Activity className="w-3 h-3" /> Overall Adherence
-              </h4>
-              <div className="bg-white border rounded-xl p-3 flex justify-between items-center shadow-sm">
-                 <div>
-                   <p className={`text-2xl font-black ${getColorClass(currentFocus.achievement)}`}>
-                     {currentFocus.achievement.toFixed(1)}%
-                   </p>
-                   <p className="text-[10px] text-muted-foreground">Compliance</p>
-                 </div>
-                 <div className="text-right">
-                   <p className="text-sm font-bold text-slate-700">{currentFocus.actual} / {currentFocus.target}</p>
-                   <p className="text-[10px] text-muted-foreground uppercase font-medium">Completed</p>
-                 </div>
-              </div>
-            </div>
 
-            {/* 2. SSI Breakdown */}
-            <div className="space-y-3">
-              <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
-                <Target className="w-3 h-3" /> Practice Quality (SSI)
-              </h4>
-              <div className="grid grid-cols-2 gap-2">
-                <MiniScoreCard label="SS2 Effective" value={currentFocus.practices.ss2} />
-                <MiniScoreCard label="SS3 Effective" value={currentFocus.practices.ss3} />
-              </div>
-
-              <div className="space-y-1.5 pt-1">
-                <p className="text-[9px] font-bold text-muted-foreground flex items-center gap-1 uppercase tracking-tight">
-                  <BookOpen className="w-2.5 h-2.5" /> Pedagogy Practices
-                </p>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {['pp1', 'pp2', 'pp3', 'pp4'].map(p => (
-                    <PracticeBox key={p} label={p.toUpperCase()} value={currentFocus.practices[p as keyof typeof currentFocus.practices]} />
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <p className="text-[9px] font-bold text-muted-foreground flex items-center gap-1 uppercase tracking-tight">
-                  <Calculator className="w-2.5 h-2.5" /> General Practices
-                </p>
-                <div className="grid grid-cols-3 gap-1.5">
-                  {['gp1', 'gp2', 'gp3'].map(p => (
-                    <PracticeBox key={p} label={p.toUpperCase()} value={currentFocus.practices[p as keyof typeof currentFocus.practices]} />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* 3. Observations */}
-            <div className="space-y-2">
-              <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
-                <Eye className="w-3 h-3" /> Classroom Insights
-              </h4>
-              <div className="bg-blue-50/40 border border-blue-100 rounded-xl p-3 flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <ClipboardList className="w-4 h-4 text-blue-600" />
+            {/* --- CONTEXT: VISIT --- */}
+            {activeContext === 'Visit' && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
+                    <Activity className="w-3 h-3" /> Visit Adherence
+                  </h4>
+                  <div className="bg-white border rounded-xl p-3 flex justify-between items-center shadow-sm border-l-4 border-l-emerald-500">
+                    <div>
+                      <p className={`text-2xl font-black ${getColorClass(currentFocus.achievement)}`}>{currentFocus.achievement.toFixed(1)}%</p>
+                      <p className="text-[10px] text-muted-foreground">Adherence Rate</p>
                     </div>
-                    <span className="text-[10px] text-blue-900 uppercase font-bold leading-tight">Total<br/>Classroom Obs</span>
-                 </div>
-                 <p className="text-xl font-black text-blue-700">{currentFocus.obs}</p>
+                    <div className="text-right">
+                      <p className="text-sm font-bold">{currentFocus.actual} / {currentFocus.target}</p>
+                      <p className="text-[10px] text-muted-foreground uppercase">Visits</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-slate-50 border rounded-lg p-3 space-y-3">
+                  <p className="text-[9px] font-bold uppercase text-slate-500">Visit Coverage Trend</p>
+                  <div className="flex items-center gap-4">
+                    <TrendingUp className="w-8 h-8 text-emerald-500 p-1.5 bg-emerald-50 rounded-md" />
+                    <div>
+                      <p className="text-xs font-bold text-slate-700">Strong Coverage</p>
+                      <p className="text-[10px] text-slate-500">Visit frequency is consistent across {currentFocus.schools} schools.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="pt-2 border-t mt-4 flex justify-between items-center px-1">
+            {/* --- CONTEXT: CRO (Original Card View) --- */}
+            {activeContext === 'CRO' && (
+              <div className="space-y-5">
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
+                    <Eye className="w-3 h-3" /> Classroom Insights
+                  </h4>
+                  <div className="bg-blue-50/40 border border-blue-100 rounded-xl p-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-lg"><ClipboardList className="w-4 h-4 text-blue-600" /></div>
+                      <span className="text-[10px] text-blue-900 uppercase font-bold leading-tight">Total<br />Classroom Obs</span>
+                    </div>
+                    <p className="text-xl font-black text-blue-700">{currentFocus.obs}</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5"><Target className="w-3 h-3" /> Practice Quality (SSI)</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    <MiniScoreCard label="SS2 Effective" value={currentFocus.practices.ss2} />
+                    <MiniScoreCard label="SS3 Effective" value={currentFocus.practices.ss3} />
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {['pp1', 'pp2', 'pp3', 'pp4'].map(p => (
+                      <PracticeBox key={p} label={p.toUpperCase()} value={currentFocus.practices[p as keyof typeof currentFocus.practices]} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- CONTEXT: SLO --- */}
+            {activeContext === 'SLO' && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
+                    <TrendingUp className="w-3 h-3" /> Learning Outcomes (SLO)
+                  </h4>
+                  <div className="bg-indigo-50/30 border border-indigo-100 rounded-xl p-4 text-center">
+                    <p className="text-3xl font-black text-indigo-700">{currentFocus.avgSlo.toFixed(1)}%</p>
+                    <p className="text-[10px] text-indigo-900 uppercase font-bold tracking-wider">Average Learning Score</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="bg-white border rounded-lg p-3 shadow-sm border-l-4 border-l-indigo-500">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase">Fluency Achievement</p>
+                    <p className="text-lg font-black text-slate-800">74.2%</p>
+                  </div>
+                  <div className="bg-white border rounded-lg p-3 shadow-sm border-l-4 border-l-indigo-500">
+                    <p className="text-[10px] font-bold text-slate-500 uppercase">Comprehension Level</p>
+                    <p className="text-lg font-black text-slate-800">62.8%</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- CONTEXT: TLM --- */}
+            {activeContext === 'TLM' && (
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h4 className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1.5">
+                    <Layers className="w-3 h-3" /> TLM Usage & Kits
+                  </h4>
+                  <div className="bg-amber-50/30 border border-amber-100 rounded-xl p-4 text-center">
+                    <p className="text-3xl font-black text-amber-600">{currentFocus.tlmUsage.toFixed(1)}%</p>
+                    <p className="text-[10px] text-amber-900 uppercase font-bold tracking-wider">Average Kit Utilization</p>
+                  </div>
+                </div>
+                <div className="bg-white border rounded-lg p-4 space-y-4">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase">Inventory Status</p>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-semibold"><span>Math Kits Available</span><span>88%</span></div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full"><div className="w-[88%] h-full bg-amber-500 rounded-full" /></div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs font-semibold"><span>Literacy Kits Available</span><span>92%</span></div>
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full"><div className="w-[92%] h-full bg-amber-500 rounded-full" /></div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Footer School Info (Common) */}
+            <div className="pt-2 border-t mt-auto flex justify-between items-center px-1">
               <div className="flex items-center gap-2">
-                 <School className="w-4 h-4 text-orange-500" />
-                 <span className="text-xs font-bold uppercase text-[10px] text-slate-600">Schools Coverage</span>
+                <School className="w-4 h-4 text-orange-500" />
+                <span className="text-xs font-bold uppercase text-[10px] text-slate-600">Schools Coverage</span>
               </div>
               <span className="text-[11px] font-black bg-orange-100 text-orange-700 px-2.5 py-0.5 rounded-full">
                 {currentFocus.schools} / {currentFocus.totalSchools}
@@ -281,11 +345,11 @@ export default function OverviewTab() {
   );
 }
 
-// Unified Color Logic: Red -> Yellow -> Green
+// Sub-components & Helpers
 function getColorClass(val: number) {
-  if (val < 45) return 'text-rose-600';     // Red (Low)
-  if (val < 75) return 'text-amber-500';    // Yellow (Mid)
-  return 'text-emerald-600';               // Green (High)
+  if (val < 45) return 'text-rose-600';
+  if (val < 75) return 'text-amber-500';
+  return 'text-emerald-600';
 }
 
 function getBgColorClass(val: number) {
@@ -309,9 +373,7 @@ const MiniScoreCard = ({ label, value }: any) => (
 const PracticeBox = ({ label, value }: any) => (
   <div className="bg-white border rounded-md p-1.5 text-center shadow-sm">
     <p className="text-[8px] font-bold text-muted-foreground mb-1">{label}</p>
-    <p className={`text-[10px] font-black ${getColorClass(value)}`}>
-      {Math.round(value)}%
-    </p>
+    <p className={`text-[10px] font-black ${getColorClass(value)}`}>{Math.round(value)}%</p>
   </div>
 );
 
@@ -319,5 +381,6 @@ function totalAchievement(d: any, context: string) {
   if (context === 'Visit') return (d.actual_visits / d.target_visits) * 100 || 0;
   if (context === 'CRO') return (d.classroom_obs / 2) * 100 || 0;
   if (context === 'SLO') return d.slo_score || 0;
+  if (context === 'TLM') return d.tlm_score || 0;
   return 0;
 }
