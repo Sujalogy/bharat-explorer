@@ -43,9 +43,14 @@ export interface VisitRecord {
   teacher_guide_followed: GuideFollowedStatus;
   tracker_filled: boolean;
   is_multigrade: boolean;
+  ssi2_effective?: boolean;
+  ssi3_effective?: boolean;
   practices: any;
   school_id: string;
   arp_id: string;
+  visit_date?: string;
+  slo_score?: number;
+  tlm_score?: number;
 }
 
 export interface DashboardFilters {
@@ -73,7 +78,9 @@ export interface DashboardState {
   mapState: MapState;
   activeTab: string;
   loading: boolean;
+  error: string | null;
   sidebarCollapsed: boolean;
+  darkMode: boolean;
 }
 
 type DashboardAction =
@@ -83,8 +90,11 @@ type DashboardAction =
   | { type: 'SET_ACTIVE_TAB'; payload: string }
   | { type: 'SET_THRESHOLDS'; payload: any }
   | { type: 'LOADING_START' }
+  | { type: 'LOADING_END' }
+  | { type: 'SET_ERROR'; payload: string }
   | { type: 'RESET_FILTERS' }
-  | { type: 'TOGGLE_SIDEBAR' };
+  | { type: 'TOGGLE_SIDEBAR' }
+  | { type: 'TOGGLE_DARK_MODE' };
 
 const initialState: DashboardState = {
   rawData: [],
@@ -99,36 +109,67 @@ const initialState: DashboardState = {
     bacId: 'All BACs'
   },
   thresholds: { chronicPerformance: 3, chronicPlanning: 3 },
-  mapState: { currentLevel: 'national', selectedState: null, selectedDistrict: null, selectedBlock: null },
+  mapState: { 
+    currentLevel: 'national', 
+    selectedState: null, 
+    selectedDistrict: null, 
+    selectedBlock: null 
+  },
   activeTab: 'home',
   loading: false,
-  sidebarCollapsed: false
+  error: null,
+  sidebarCollapsed: false,
+  darkMode: false
 };
 
 function dashboardReducer(state: DashboardState, action: DashboardAction): DashboardState {
   switch (action.type) {
     case 'LOADING_START':
-      return { ...state, loading: true };
+      return { ...state, loading: true, error: null };
+    
+    case 'LOADING_END':
+      return { ...state, loading: false };
+    
+    case 'SET_ERROR':
+      return { ...state, loading: false, error: action.payload };
+    
     case 'SET_VIEW_DATA':
-      return { ...state, rawData: action.payload, filteredData: action.payload, loading: false };
+      console.log('Setting view data:', action.payload.length, 'records');
+      return { 
+        ...state, 
+        rawData: action.payload, 
+        filteredData: action.payload, 
+        loading: false, 
+        error: null 
+      };
+    
     case 'SET_ACTIVE_TAB':
+      console.log('Switching to tab:', action.payload);
       return { ...state, activeTab: action.payload };
+    
     case 'TOGGLE_SIDEBAR':
       return { ...state, sidebarCollapsed: !state.sidebarCollapsed };
+    
+    case 'TOGGLE_DARK_MODE':
+      return { ...state, darkMode: !state.darkMode };
+    
     case 'RESET_FILTERS':
+      console.log('Resetting all filters');
       return {
         ...initialState,
-        activeTab: state.activeTab, // CRITICAL: Keep the user on the current tab
-        sidebarCollapsed: state.sidebarCollapsed, // Optional: keep sidebar state
-        thresholds: state.thresholds // Optional: keep user thresholds
+        activeTab: state.activeTab,
+        sidebarCollapsed: state.sidebarCollapsed,
+        darkMode: state.darkMode,
+        thresholds: state.thresholds
       };
 
     case 'SET_FILTERS': {
+      console.log('Setting filters:', action.payload);
       const newFilters = { ...state.filters, ...action.payload };
       const newMap = { ...state.mapState };
 
       // Hierarchical Sync: Reset children when parent changes
-      if (action.payload.state) {
+      if (action.payload.state !== undefined) {
         newFilters.district = 'All';
         newFilters.block = 'All';
         newMap.currentLevel = action.payload.state === 'All' ? 'national' : 'state';
@@ -136,13 +177,15 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         newMap.selectedDistrict = null;
         newMap.selectedBlock = null;
       }
-      if (action.payload.district) {
+      
+      if (action.payload.district !== undefined) {
         newFilters.block = 'All';
         newMap.currentLevel = action.payload.district === 'All' ? 'state' : 'district';
         newMap.selectedDistrict = action.payload.district === 'All' ? null : action.payload.district;
         newMap.selectedBlock = null;
       }
-      if (action.payload.block) {
+      
+      if (action.payload.block !== undefined) {
         newMap.currentLevel = action.payload.block === 'All' ? 'district' : 'block';
         newMap.selectedBlock = action.payload.block === 'All' ? null : action.payload.block;
       }
@@ -151,6 +194,7 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
     }
 
     case 'SET_MAP_STATE': {
+      console.log('Setting map state:', action.payload);
       const nextMap = { ...state.mapState, ...action.payload };
       const nextFilters = { ...state.filters };
 
@@ -162,12 +206,14 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
         nextFilters.block = 'All';
         nextMap.selectedState = realName;
       }
+      
       if (action.payload.selectedDistrict !== undefined) {
         const realName = findActualName(state.rawData, 'district', action.payload.selectedDistrict);
         nextFilters.district = realName || 'All';
         nextFilters.block = 'All';
         nextMap.selectedDistrict = realName;
       }
+      
       if (action.payload.selectedBlock !== undefined) {
         const realName = findActualName(state.rawData, 'block', action.payload.selectedBlock);
         nextFilters.block = realName || 'All';
@@ -176,45 +222,110 @@ function dashboardReducer(state: DashboardState, action: DashboardAction): Dashb
 
       return { ...state, mapState: nextMap, filters: nextFilters };
     }
+    
+    case 'SET_THRESHOLDS':
+      console.log('Setting thresholds:', action.payload);
+      return { ...state, thresholds: { ...state.thresholds, ...action.payload } };
+    
     default:
       return state;
   }
 }
 
-const DashboardContext = createContext<any>(null);
+interface DashboardContextValue {
+  state: DashboardState;
+  dispatch: React.Dispatch<DashboardAction>;
+  availableFilters: {
+    academicYears: string[];
+    states: string[];
+    districts: string[];
+    blocks: string[];
+  };
+}
+
+const DashboardContext = createContext<DashboardContextValue | null>(null);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(dashboardReducer, initialState);
 
-  // Centralized Fetching logic
+  // Centralized Fetching logic with proper error handling
   useEffect(() => {
     const controller = new AbortController();
+    
     const updateDashboard = async () => {
       dispatch({ type: 'LOADING_START' });
+      
       try {
-        const query = new URLSearchParams({
-          year: state.filters.academicYear,
-          state: state.filters.state,
-          district: state.filters.district,
-          block: state.filters.block,
-          subject: state.filters.subject,
-          grade: state.filters.grade
+        // Build query parameters
+        const params = new URLSearchParams();
+        
+        // Only add non-default filters
+        if (state.filters.academicYear && state.filters.academicYear !== 'All') {
+          params.append('year', state.filters.academicYear);
+        }
+        if (state.filters.state && state.filters.state !== 'All') {
+          params.append('state', state.filters.state);
+        }
+        if (state.filters.district && state.filters.district !== 'All') {
+          params.append('district', state.filters.district);
+        }
+        if (state.filters.block && state.filters.block !== 'All') {
+          params.append('block', state.filters.block);
+        }
+        if (state.filters.subject && state.filters.subject !== 'All') {
+          params.append('subject', state.filters.subject);
+        }
+        if (state.filters.grade && state.filters.grade !== 'All') {
+          params.append('grade', state.filters.grade);
+        }
+
+        const queryString = params.toString();
+        const url = `http://localhost:3000/api/v1/dashboard/analytics${queryString ? '?' + queryString : ''}`;
+        
+        console.log('Fetching from:', url);
+        
+        const response = await fetch(url, {
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+          }
         });
 
-        const response = await fetch(`http://localhost:3000/api/v1/dashboard/analytics?${query}`, {
-          signal: controller.signal
-        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
         const data = await response.json();
-        dispatch({ type: 'SET_VIEW_DATA', payload: Array.isArray(data) ? data : [] });
+        
+        console.log('Received data:', {
+          records: Array.isArray(data) ? data.length : 0,
+          sample: Array.isArray(data) ? data[0] : null
+        });
+        
+        dispatch({ 
+          type: 'SET_VIEW_DATA', 
+          payload: Array.isArray(data) ? data : [] 
+        });
+        
       } catch (err: any) {
         if (err.name !== 'AbortError') {
           console.error("Fetch Error:", err);
-          dispatch({ type: 'SET_VIEW_DATA', payload: [] });
+          const errorMessage = err.message || 'Unknown error occurred';
+          dispatch({ 
+            type: 'SET_ERROR', 
+            payload: `Failed to load data: ${errorMessage}` 
+          });
         }
       }
     };
+    
     updateDashboard();
-    return () => controller.abort();
+    
+    return () => {
+      console.log('Aborting fetch');
+      controller.abort();
+    };
   }, [
     state.filters.academicYear,
     state.filters.state,
@@ -226,6 +337,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   // Hierarchical Filter List Calculation
   const availableFilters = useMemo(() => {
+    console.log('Calculating available filters from', state.rawData.length, 'records');
+    
     const stateFiltered = state.filters.state === 'All'
       ? state.rawData
       : state.rawData.filter(d => d.state === state.filters.state);
@@ -234,19 +347,40 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       ? stateFiltered
       : stateFiltered.filter(d => d.district === state.filters.district);
 
-    return {
+    const filters = {
       academicYears: getUniqueValues(state.rawData, 'academic_year').reverse(),
       states: getUniqueValues(state.rawData, 'state'),
       districts: getUniqueValues(stateFiltered, 'district'),
       blocks: getUniqueValues(districtFiltered, 'block'),
     };
+
+    console.log('Available filters:', {
+      years: filters.academicYears.length,
+      states: filters.states.length,
+      districts: filters.districts.length,
+      blocks: filters.blocks.length
+    });
+
+    return filters;
   }, [state.rawData, state.filters.state, state.filters.district]);
 
+  const contextValue: DashboardContextValue = {
+    state,
+    dispatch,
+    availableFilters
+  };
+
   return (
-    <DashboardContext.Provider value={{ state, dispatch, availableFilters }}>
+    <DashboardContext.Provider value={contextValue}>
       {children}
     </DashboardContext.Provider>
   );
 }
 
-export const useDashboard = () => useContext(DashboardContext);
+export const useDashboard = () => {
+  const context = useContext(DashboardContext);
+  if (!context) {
+    throw new Error('useDashboard must be used within DashboardProvider');
+  }
+  return context;
+};

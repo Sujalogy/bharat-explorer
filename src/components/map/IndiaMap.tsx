@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { geoMercator, geoPath } from 'd3-geo';
-import { ChevronLeft, RotateCcw, Loader2, Navigation } from 'lucide-react';
+import { ChevronLeft, RotateCcw, Loader2, Navigation, MapPin } from 'lucide-react';
 import MapRegion from './MapRegion';
 import MapTooltip from './MapTooltip';
 import { useDashboard } from '@/context/DashboardContext';
@@ -27,13 +27,14 @@ const IndiaMap = ({
   const [tooltip, setTooltip] = useState<any | null>(null);
   const [geoData, setGeoData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // NEW: State for mouse geographic coordinates
+  const [loadingSchools, setLoadingSchools] = useState(false);
+  const [actualSchoolPins, setActualSchoolPins] = useState<any[]>([]);
   const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const width = 800;
   const height = 1000;
 
+  // Load GeoJSON data based on current level
   useEffect(() => {
     const loadGeoData = async () => {
       if (currentLevel === 'national' || currentLevel === 'country') {
@@ -62,6 +63,32 @@ const IndiaMap = ({
     };
     loadGeoData();
   }, [currentLevel, selectedState, selectedDistrict, selectedBlock]);
+
+  // Load school pins when at block level
+  useEffect(() => {
+    const loadSchools = async () => {
+      // Only show school pins at block level
+      if (currentLevel !== 'block' || !selectedBlock) {
+        setActualSchoolPins([]);
+        return;
+      }
+
+      setLoadingSchools(true);
+      try {
+        console.log('Loading schools for block:', selectedBlock);
+        const schools = await api.schools.getByBlock(selectedBlock);
+        console.log('Loaded schools:', schools.length);
+        setActualSchoolPins(schools || []);
+      } catch (err) {
+        console.error('Error loading schools:', err);
+        setActualSchoolPins([]);
+      } finally {
+        setLoadingSchools(false);
+      }
+    };
+
+    loadSchools();
+  }, [currentLevel, selectedBlock]);
 
   const levelFeatures = useMemo(() => {
     if (!geoData || !geoData.features) return [];
@@ -101,8 +128,6 @@ const IndiaMap = ({
         name = p.ac_name || p.sub_dist || p.AC_NAME;
       }
 
-      // FIX: Create a unique ID by combining level and name or using index as fallback
-      // This prevents "6020510501" from colliding with itself
       const uniqueId = `${currentLevel}-${name}-${feature.id || p.ogc_fid || index}`;
 
       return {
@@ -113,7 +138,6 @@ const IndiaMap = ({
     });
   }, [levelFeatures, pathGenerator, currentLevel]);
 
-  // NEW: Handler to calculate lat/lng on mouse move
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!projection || !svgRef.current) return;
 
@@ -122,10 +146,7 @@ const IndiaMap = ({
     pt.x = e.clientX;
     pt.y = e.clientY;
 
-    // Convert screen coordinates to SVG coordinates
     const svgP = pt.matrixTransform(svg.getScreenCTM()?.inverse());
-
-    // Use projection.invert to get [longitude, latitude]
     const [lng, lat] = projection.invert([svgP.x, svgP.y]) || [0, 0];
 
     setCoords({ lat, lng });
@@ -144,9 +165,13 @@ const IndiaMap = ({
   return (
     <div ref={containerRef} className="relative h-full w-full flex items-center justify-center overflow-hidden bg-white">
 
+      {/* Loading Overlay */}
       {isLoading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading map data...</p>
+          </div>
         </div>
       )}
 
@@ -159,6 +184,25 @@ const IndiaMap = ({
           <Button variant="outline" size="icon" onClick={() => dispatch({ type: 'RESET_FILTERS' })} className="h-9 w-9 bg-white shadow-sm border-slate-200">
             <RotateCcw className="h-4 w-4" />
           </Button>
+        </div>
+      )}
+
+      {/* School Count Indicator (Block Level Only) */}
+      {currentLevel === 'block' && (
+        <div className="absolute top-4 left-4 z-10 bg-white px-4 py-2 border rounded-lg shadow-sm">
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-semibold">
+              {loadingSchools ? (
+                <span className="text-muted-foreground">Loading schools...</span>
+              ) : (
+                <>
+                  <span className="text-blue-600">{actualSchoolPins.length}</span>
+                  <span className="text-muted-foreground"> schools</span>
+                </>
+              )}
+            </span>
+          </div>
         </div>
       )}
 
@@ -177,18 +221,18 @@ const IndiaMap = ({
         </div>
       </div>
 
-      {/* NEW: Latitude & Longitude Display (Bottom Right) */}
+      {/* Latitude & Longitude Display (Bottom Right) */}
       {coords && (
-        <div className="absolute bottom-0 right-0 z-10  px-3 py-1.5 border-slate-700 shadow-xl pointer-events-none transition-opacity duration-300">
-          <div className="flex items-center gap-3 text-[10px] font-mono text-black tracking-wider">
+        <div className="absolute bottom-0 right-0 z-10 bg-white/90 backdrop-blur-sm px-3 py-1.5 border border-slate-200 rounded-tl-md shadow-sm pointer-events-none transition-opacity duration-300">
+          <div className="flex items-center gap-3 text-[10px] font-mono text-slate-700 tracking-wider">
             <div className="flex items-center gap-1.5">
-              <Navigation className="w-3 h-3 text-emerald-800-400 rotate-45" />
-              <span className="text-gray-700">LAT:</span>
+              <Navigation className="w-3 h-3 text-emerald-600 rotate-45" />
+              <span className="text-slate-500">LAT:</span>
               <span className="font-bold">{coords.lat.toFixed(4)}°N</span>
             </div>
-            <div className="h-3 w-[1px] bg-slate-700" />
+            <div className="h-3 w-[1px] bg-slate-300" />
             <div className="flex items-center gap-1.5">
-              <span className="text-slate-400">LNG:</span>
+              <span className="text-slate-500">LNG:</span>
               <span className="font-bold">{coords.lng.toFixed(4)}°E</span>
             </div>
           </div>
@@ -200,10 +244,11 @@ const IndiaMap = ({
         viewBox={`0 0 ${width} ${height}`}
         className="w-full h-full transition-all duration-500 ease-in-out"
         preserveAspectRatio="xMidYMid meet"
-        onMouseMove={handleMouseMove} // NEW: Listen for mouse movement
-        onMouseLeave={() => setCoords(null)} // Hide coords when mouse leaves map
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setCoords(null)}
       >
         <g>
+          {/* Render Map Regions */}
           {regions.map((region: any) => {
             const regionRecords = (data || []).filter((d: any) => {
               const rName = region.name?.toLowerCase();
@@ -239,38 +284,61 @@ const IndiaMap = ({
             );
           })}
 
-          {/* School Pins */}
-          {projection && schoolPins.map((school: any) => {
+          {/* Render School Pins (Blue Dots) - Only at Block Level */}
+          {projection && currentLevel === 'block' && actualSchoolPins.map((school: any) => {
+            // Validate coordinates
+            if (!school.lat || !school.lng || isNaN(school.lat) || isNaN(school.lng)) {
+              return null;
+            }
+
             const coords = projection([school.lng, school.lat]);
-            if (!coords || isNaN(coords[0])) return null;
+            if (!coords || isNaN(coords[0]) || isNaN(coords[1])) {
+              return null;
+            }
+
             return (
-              <circle
-                key={school.id}
-                cx={coords[0]}
-                cy={coords[1]}
-                r={5}
-                className="fill-blue-700 stroke-white stroke-[2px] cursor-pointer drop-shadow-md transition-all duration-200 hover:r-7"
-                onMouseEnter={(e) => {
-                  const rect = containerRef.current?.getBoundingClientRect();
-                  if (!rect) return;
-                  setTooltip({
-                    isSchool: true,
-                    name: school.name,
-                    schoolDetails: {
-                      id: school.id,
-                      students_enrolled: school.students_enrolled || 'N/A',
-                      infrastructure_index: school.infra_index || '0',
-                    },
-                    x: e.clientX - rect.left,
-                    y: e.clientY - rect.top
-                  });
-                }}
-                onMouseLeave={() => setTooltip(null)}
-              />
+              <g key={school.id || `school-${coords[0]}-${coords[1]}`}>
+                {/* Outer glow effect */}
+                <circle
+                  cx={coords[0]}
+                  cy={coords[1]}
+                  r={8}
+                  className="fill-blue-400/20 animate-pulse"
+                />
+                {/* Main school pin */}
+                <circle
+                  cx={coords[0]}
+                  cy={coords[1]}
+                  r={5}
+                  className="fill-blue-600 stroke-white stroke-[2px] cursor-pointer transition-all duration-200 hover:r-7 hover:fill-blue-700 drop-shadow-lg"
+                  onMouseEnter={(e) => {
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (!rect) return;
+                    setTooltip({
+                      isSchool: true,
+                      name: school.name || 'Unknown School',
+                      schoolDetails: {
+                        id: school.id || 'N/A',
+                        udise: school.udise_code || school.id,
+                        students_enrolled: school.students_enrolled || 'N/A',
+                        category: school.category || 'Primary',
+                        visit_status: school.visit_status || 'visited',
+                      },
+                      x: e.clientX - rect.left,
+                      y: e.clientY - rect.top
+                    });
+                  }}
+                  onMouseLeave={() => setTooltip(null)}
+                  style={{
+                    filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
+                  }}
+                />
+              </g>
             );
           })}
         </g>
       </svg>
+      
       <MapTooltip data={tooltip} />
     </div>
   );
