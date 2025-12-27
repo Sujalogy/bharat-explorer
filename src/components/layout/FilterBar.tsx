@@ -19,7 +19,10 @@ export default function FilterBar() {
     filters.academicYear !== 'All',
     filters.state !== 'All',
     filters.district !== 'All',
-    filters.block !== 'All'
+    filters.block !== 'All',
+    filters.subject !== 'All',
+    filters.grade !== 'All',
+    filters.visitType !== 'All'
   ].filter(Boolean).length;
 
   const handleFilterChange = (key: string, value: string) => {
@@ -39,7 +42,9 @@ export default function FilterBar() {
 
         {/* Academic Year */}
         <Select value={filters.academicYear} onValueChange={(v) => handleFilterChange('academicYear', v)}>
-          <SelectTrigger className="w-[140px] h-9 text-xs"><SelectValue placeholder="Year" /></SelectTrigger>
+          <SelectTrigger className="w-[140px] h-9 text-xs">
+            <SelectValue placeholder="Year" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Years</SelectItem>
             {availableFilters.academicYears.map((year: string) => (
@@ -50,36 +55,85 @@ export default function FilterBar() {
 
         {/* State */}
         <Select value={filters.state} onValueChange={(v) => handleFilterChange('state', v)}>
-          <SelectTrigger className="w-[150px] h-9 text-xs"><SelectValue placeholder="State" /></SelectTrigger>
+          <SelectTrigger className="w-[150px] h-9 text-xs">
+            <SelectValue placeholder="State" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All States</SelectItem>
-            {availableFilters.states.map((s: string) => <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>)}
+            {availableFilters.states.map((s: string) => (
+              <SelectItem key={s} value={s} className="capitalize">{s}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
         {/* District */}
         <Select 
-            value={filters.district} 
-            onValueChange={(v) => handleFilterChange('district', v)}
-            disabled={filters.state === 'All'}
+          value={filters.district} 
+          onValueChange={(v) => handleFilterChange('district', v)}
+          disabled={filters.state === 'All'}
         >
-          <SelectTrigger className="w-[150px] h-9 text-xs"><SelectValue placeholder="District" /></SelectTrigger>
+          <SelectTrigger className="w-[150px] h-9 text-xs">
+            <SelectValue placeholder="District" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Districts</SelectItem>
-            {availableFilters.districts.map((d: string) => <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>)}
+            {availableFilters.districts.map((d: string) => (
+              <SelectItem key={d} value={d} className="capitalize">{d}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
 
         {/* Block */}
         <Select 
-            value={filters.block} 
-            onValueChange={(v) => handleFilterChange('block', v)}
-            disabled={filters.district === 'All'}
+          value={filters.block} 
+          onValueChange={(v) => handleFilterChange('block', v)}
+          disabled={filters.district === 'All'}
         >
-          <SelectTrigger className="w-[150px] h-9 text-xs"><SelectValue placeholder="Block" /></SelectTrigger>
+          <SelectTrigger className="w-[150px] h-9 text-xs">
+            <SelectValue placeholder="Block" />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All Blocks</SelectItem>
-            {availableFilters.blocks.map((b: string) => <SelectItem key={b} value={b} className="capitalize">{b}</SelectItem>)}
+            {availableFilters.blocks.map((b: string) => (
+              <SelectItem key={b} value={b} className="capitalize">{b}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Subject */}
+        <Select value={filters.subject} onValueChange={(v) => handleFilterChange('subject', v)}>
+          <SelectTrigger className="w-[130px] h-9 text-xs">
+            <SelectValue placeholder="Subject" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Subjects</SelectItem>
+            <SelectItem value="Literacy">Literacy</SelectItem>
+            <SelectItem value="Numeracy">Numeracy</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Grade */}
+        <Select value={filters.grade} onValueChange={(v) => handleFilterChange('grade', v)}>
+          <SelectTrigger className="w-[120px] h-9 text-xs">
+            <SelectValue placeholder="Grade" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Grades</SelectItem>
+            <SelectItem value="Grade 1">Grade 1</SelectItem>
+            <SelectItem value="Grade 2">Grade 2</SelectItem>
+            <SelectItem value="Grade 3">Grade 3</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Visit Type */}
+        <Select value={filters.visitType} onValueChange={(v) => handleFilterChange('visitType', v)}>
+          <SelectTrigger className="w-[130px] h-9 text-xs">
+            <SelectValue placeholder="Visit Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Types</SelectItem>
+            <SelectItem value="Individual">Individual</SelectItem>
+            <SelectItem value="Joint">Joint</SelectItem>
           </SelectContent>
         </Select>
 
@@ -89,7 +143,12 @@ export default function FilterBar() {
         </div>
 
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'RESET_FILTERS' })} className="h-9 text-xs text-muted-foreground">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => dispatch({ type: 'RESET_FILTERS' })} 
+            className="h-9 text-xs text-muted-foreground"
+          >
             <X className="w-3.5 h-3.5 mr-1" /> Clear
           </Button>
         )}

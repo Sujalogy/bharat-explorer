@@ -75,9 +75,7 @@ const IndiaMap = ({
 
       setLoadingSchools(true);
       try {
-        console.log('Loading schools for block:', selectedBlock);
         const schools = await api.schools.getByBlock(selectedBlock);
-        console.log('Loaded schools:', schools.length);
         setActualSchoolPins(schools || []);
       } catch (err) {
         console.error('Error loading schools:', err);

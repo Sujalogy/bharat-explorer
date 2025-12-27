@@ -2,7 +2,7 @@
 import { ChevronRight, Home } from 'lucide-react';
 
 interface MapBreadcrumbProps {
-  currentLevel: 'national' | 'state' | 'district' | 'block';
+  currentLevel: string;
   selectedState?: string;
   selectedDistrict?: string;
   selectedBlock?: string;

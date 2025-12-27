@@ -10,12 +10,9 @@ const geoCache = new Map<string, any>();
 
 async function fetchWithCache(url: string, skipCache = false) {
   if (!skipCache && geoCache.has(url)) {
-    console.log('Cache hit for:', url);
     return geoCache.get(url);
   }
 
-  console.log('Fetching:', url);
-  
   try {
     const response = await fetch(url);
     
@@ -87,16 +84,13 @@ export const api = {
     // Get schools by block for map pins
     getByBlock: async (block: string) => {
       if (!block || block === 'All') {
-        console.log('No block specified, returning empty array');
         return [];
       }
       
       const url = `${API_BASE_URL}/schools?block=${encodeURIComponent(block)}`;
-      console.log('Fetching schools from:', url);
       
       try {
         const data = await fetchWithCache(url, true);
-        console.log('Schools received:', data?.length || 0);
         return data || [];
       } catch (error) {
         console.error('Error fetching schools:', error);
@@ -109,7 +103,6 @@ export const api = {
    * UTILITIES
    */
   clearCache: () => {
-    console.log('Clearing API cache');
     geoCache.clear();
   },
 };
