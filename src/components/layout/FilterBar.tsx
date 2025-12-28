@@ -1,3 +1,5 @@
+// src/components/layout/FilterBar.tsx
+
 import { Search, X, Filter } from 'lucide-react';
 import { useDashboard } from '@/context/DashboardContext';
 import { Button } from '@/components/ui/button';
@@ -22,12 +24,24 @@ export default function FilterBar() {
     filters.block !== 'All',
     filters.subject !== 'All',
     filters.grade !== 'All',
-    filters.visitType !== 'All'
+    filters.visitType !== 'All',
+    filters.month !== 'All' // ✅ NEW
   ].filter(Boolean).length;
 
   const handleFilterChange = (key: string, value: string) => {
     dispatch({ type: 'SET_FILTERS', payload: { [key]: value } });
   };
+
+  // ✅ NEW: Month order for proper sorting
+  const monthOrder = [
+    'April', 'May', 'June', 'July', 'August', 'September',
+    'October', 'November', 'December', 'January', 'February', 'March'
+  ];
+
+  // ✅ NEW: Sort available months by academic year order
+  const sortedMonths = availableFilters.months?.sort((a, b) => {
+    return monthOrder.indexOf(a) - monthOrder.indexOf(b);
+  }) || [];
 
   return (
     <div className="bg-card border-b border-border px-4 py-3 sticky top-0 z-30">
@@ -49,6 +63,19 @@ export default function FilterBar() {
             <SelectItem value="All">All Years</SelectItem>
             {availableFilters.academicYears.map((year: string) => (
               <SelectItem key={year} value={year}>{year}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* ✅ NEW: Month Filter */}
+        <Select value={filters.month} onValueChange={(v) => handleFilterChange('month', v)}>
+          <SelectTrigger className="w-[140px] h-9 text-xs">
+            <SelectValue placeholder="Month" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">All Months</SelectItem>
+            {sortedMonths.map((month: string) => (
+              <SelectItem key={month} value={month}>{month}</SelectItem>
             ))}
           </SelectContent>
         </Select>

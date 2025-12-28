@@ -65,10 +65,11 @@ export interface DashboardFilters {
   block: string;
   bacId: string;
   visitType: string;
+  month?: string; // NEW
 }
 
 export interface MapState {
-  currentLevel?: string;
+  currentLevel?: any;
   selectedState: string | null;
   selectedDistrict: string | null;
   selectedBlock: string | null;
@@ -239,6 +240,7 @@ interface DashboardContextValue {
     states: string[];
     districts: string[];
     blocks: string[];
+    months?: string[];
   };
 }
 
@@ -260,6 +262,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         if (state.filters.academicYear && state.filters.academicYear !== 'All') {
           params.append('year', state.filters.academicYear);
         }
+        if (state.filters.month && state.filters.month !== 'All') {
+          params.append('month', state.filters.month);
+        }
         if (state.filters.state && state.filters.state !== 'All') {
           params.append('state', state.filters.state);
         }
@@ -274,6 +279,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         }
         if (state.filters.grade && state.filters.grade !== 'All') {
           params.append('grade', state.filters.grade);
+        }
+        if (state.filters.visitType && state.filters.visitType !== 'All') {
+          params.append('visit_type', state.filters.visitType);
+        }
+        if (state.filters.bacId && state.filters.bacId !== 'All BACs') {
+          params.append('bac_id', state.filters.bacId);
         }
         if (state.filters.visitType && state.filters.visitType !== 'All') {
           params.append('visit_type', state.filters.visitType);
@@ -322,7 +333,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     state.filters.block,
     state.filters.subject,
     state.filters.grade,
-    state.filters.visitType // NEW
+    state.filters.visitType, 
+    state.filters.month
   ]);
 
   // Hierarchical Filter List Calculation

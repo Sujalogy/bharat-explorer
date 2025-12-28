@@ -15,54 +15,58 @@ const MapViewer = () => {
 
   // Aggregation logic to convert raw visit records into map data
   const mapData = useMemo(() => {
-    const rawRecords = state.filteredData;
-    const groups: Record<string, any> = {};
+  const rawRecords = state.filteredData;
+  const groups: Record<string, any> = {};
 
-    rawRecords.forEach((record: any) => {
-      let key = "";
-      if (currentLevel === 'national') key = record.state;
-      else if (currentLevel === 'state') key = record.district;
-      else if (currentLevel === 'district') key = record.block;
+  rawRecords.forEach((record: any) => {
+    let key = "";
+    if (currentLevel === 'national') key = record.state;
+    else if (currentLevel === 'state') key = record.district;
+    else if (currentLevel === 'district') key = record.block;
 
-      if (!key) return;
+    if (!key) return;
 
-      if (!groups[key]) {
-        groups[key] = {
-          name: key,
-          actual: 0,
-          target: 0,
-          rec: 0,
-          obs: 0,
-          schools: new Set(),
-          bacs: new Set()
-        };
-      }
-      groups[key].actual += record.actual_visits || 0;
-      groups[key].target += record.target_visits || 0;
-      groups[key].rec += record.recommended_visits || 0;
-      groups[key].obs += record.classroom_obs || 0;
-      groups[key].schools.add(record.school_id);
-      groups[key].bacs.add(record.bac_name);
-    });
+    if (!groups[key]) {
+      groups[key] = {
+        name: key,
+        uniqueVisitDays: new Set(),  // ✅ Track unique dates
+        target: 0,
+        rec: 0,
+        obs: 0,
+        schools: new Set(),
+        bacs: new Set()
+      };
+    }
+    
+    // ✅ Add visit date to Set (automatically handles uniqueness)
+    groups[key].uniqueVisitDays.add(record.visit_date);
+    
+    groups[key].target += record.target_visits || 0;
+    groups[key].rec += record.recommended_visits || 0;
+    groups[key].obs += record.classroom_obs || 0;
+    groups[key].schools.add(record.school_id);
+    groups[key].bacs.add(record.bac_name);
+  });
 
-    return Object.values(groups).map(g => ({
+  return Object.values(groups).map(g => {
+    const actual = g.uniqueVisitDays.size;  // ✅ Count unique days
+    
+    return {
       state: currentLevel === 'national' ? g.name : selectedState,
       district: currentLevel === 'state' ? g.name : selectedDistrict,
       block: currentLevel === 'district' ? g.name : undefined,
-      achievement: g.target > 0 ? Math.round((g.actual / g.target) * 100) : 0,
-      visits: g.actual,
+      achievement: g.target > 0 ? Math.round((actual / g.target) * 100) : 0,
+      visits: actual,  // ✅ Unique visit days
       planning: g.rec > 0 ? Math.round((g.target / g.rec) * 100) : 0,
-      // New Metrics
-      visit_count: g.actual,
+      visit_count: actual,
       obs_count: g.obs,
       schools_covered: g.schools.size,
       bac_count: g.bacs.size,
-      // Note: These usually come from GeoJSON or a Master DB
-      // Mocking values for demonstration
       total_schools: Math.round(g.schools.size * 1.2) + 2,
       area_sqkm: Math.floor(Math.random() * 5000) + 1000
-    })) as RegionData[];
-  }, [state.filteredData, currentLevel, selectedState, selectedDistrict]);
+    };
+  }) as RegionData[];
+}, [state.filteredData, currentLevel, selectedState, selectedDistrict]);
 
   const handleRegionClick = useCallback((region: SelectedRegion) => {
     if (currentLevel === 'national') {
