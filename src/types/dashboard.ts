@@ -15,7 +15,9 @@ export interface VisitRecord {
   target_visits: number;
   actual_visits: number;
   classroom_obs: number;
-  
+  slo_score: number;
+  tlm_score: number;
+  visit_type: VisitType;
   // CRO & KPI2 Data
   subject: 'Literacy' | 'Numeracy';
   grade: 'Grade 1' | 'Grade 2' | 'Grade 3';
@@ -42,6 +44,8 @@ export interface VisitRecord {
   // Profile data
   school_id: string;
   arp_id: string;
+  visit_date: string;
+  
 }
 
 export interface User {

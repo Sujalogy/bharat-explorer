@@ -41,6 +41,9 @@ export interface VisitRecord {
   students_present: number;
   teacher_guide_available: boolean;
   teacher_guide_followed: GuideFollowedStatus;
+  visit_type: string;
+  actionable_feedback_given: boolean;
+  structured_feedback_reviewed: boolean;
   tracker_filled: boolean;
   is_multigrade: boolean;
   ssi2_effective?: boolean;
@@ -49,8 +52,8 @@ export interface VisitRecord {
   school_id: string;
   arp_id: string;
   visit_date?: string;
-  slo_score?: number;
-  tlm_score?: number;
+  slo_score: number;
+  tlm_score: number;
 }
 
 export interface DashboardFilters {
@@ -75,7 +78,7 @@ export interface DashboardState {
   rawData: VisitRecord[];
   filteredData: VisitRecord[];
   filters: DashboardFilters;
-  thresholds: { chronicPerformance: number; chronicPlanning: number };
+  thresholds: { chronicPerformance: any; chronicPlanning: any };
   mapState: MapState;
   activeTab: string;
   loading: boolean;
@@ -84,7 +87,7 @@ export interface DashboardState {
   darkMode: boolean;
 }
 
-type DashboardAction =
+export type DashboardAction =
   | { type: 'SET_VIEW_DATA'; payload: VisitRecord[] }
   | { type: 'SET_FILTERS'; payload: Partial<DashboardFilters> }
   | { type: 'SET_MAP_STATE'; payload: Partial<MapState> }

@@ -146,10 +146,10 @@ export default function OverviewTab() {
                 <Tabs value={activeContext} onValueChange={(val) => setActiveContext(val as MetricContext)} className="w-auto">
                   <TabsList className="bg-white gap-1">
                     {[
-                      { id: 'SLO', icon: GraduationCap, label: 'SLO' },
-                      { id: 'TLM', icon: Microscope, label: 'TLM' },
+                      { id: 'Visit', icon: CheckCircle2, label: 'Visit' },
                       { id: 'CRO', icon: ClipboardList, label: 'CRO' },
-                      { id: 'Visit', icon: CheckCircle2, label: 'Visit' }
+                      { id: 'TLM', icon: Microscope, label: 'TLM' },
+                      { id: 'SLO', icon: GraduationCap, label: 'SLO' },
                     ].map((tab) => (
                       <TabsTrigger key={tab.id} value={tab.id} className="relative px-3 py-1 text-[11px] font-semibold tracking-wide uppercase transition-all border rounded-lg data-[state=active]:bg-background data-[state=active]:text-primary">
                         <tab.icon className={`w-3.5 h-3.5 mr-2 ${activeContext === tab.id ? 'scale-110' : 'opacity-70'}`} />

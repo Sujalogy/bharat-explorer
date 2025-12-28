@@ -1,7 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDashboard } from '@/context/DashboardContext';
-import { usePerformanceMetrics } from '@/hooks/usePerformanceMetrics';
-import { usePlanningMetrics } from '@/hooks/usePlanningMetrics';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import KPICard from '@/components/shared/KPICard';
@@ -12,69 +10,161 @@ import {
   Line, ReferenceLine, Legend, AreaChart, Area 
 } from 'recharts';
 import ThresholdControl from '../shared/ThresholdControl';
-import { Download, TrendingUp, AlertCircle, Sparkles, FileText } from 'lucide-react';
+import { Download, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function VisitReportTab() {
   const { state, dispatch } = useDashboard();
-  const { filteredData, thresholds } = state;
+  const { filters, thresholds } = state;
 
-  // --- Metrics Hooks ---
-  const perfMetrics = usePerformanceMetrics(filteredData, thresholds.chronicPerformance);
-  const planMetrics = usePlanningMetrics(filteredData, thresholds.chronicPlanning);
+  // State for backend data
+  const [summaryData, setSummaryData] = useState(null);
+  const [chronicPerformers, setChronicPerformers] = useState([]);
+  const [chronicPlanners, setChronicPlanners] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const [summaryXAxis, setSummaryXAxis] = useState('month');
+  const [activeTab, setActiveTab] = useState('summary');
 
-  // --- Summary Tab State & Logic ---
-  const [summaryXAxis, setSummaryXAxis] = useState<'month' | 'academic_year'>('month');
+  // Fetch summary metrics from backend
+  useEffect(() => {
+    const fetchSummaryData = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const params = new URLSearchParams();
+        
+        if (filters.state && filters.state !== 'All') params.append('state', filters.state);
+        if (filters.district && filters.district !== 'All') params.append('district', filters.district);
+        if (filters.block && filters.block !== 'All') params.append('block', filters.block);
+        if (filters.academicYear && filters.academicYear !== 'All') params.append('year', filters.academicYear);
+        if (filters.subject && filters.subject !== 'All') params.append('subject', filters.subject);
+        if (filters.grade && filters.grade !== 'All') params.append('grade', filters.grade);
+        if (filters.visitType && filters.visitType !== 'All') params.append('visit_type', filters.visitType);
 
-  const summaryData = useMemo(() => {
-    // 1. Calculate Aggregated KPI Values
-    const totalActual = filteredData.reduce((acc, curr) => acc + curr.actual_visits, 0);
-    const totalTarget = filteredData.reduce((acc, curr) => acc + curr.target_visits, 0);
-    const totalRecommended = filteredData.reduce((acc, curr) => acc + curr.recommended_visits, 0);
-
-    // BACs who missed their target (Actual < Target)
-    const missedTargetBacs = new Set(
-      filteredData.filter(d => d.actual_visits < d.target_visits).map(d => d.bac_name)
-    ).size;
-
-    // BACs who fluctuate their targets (Target != Recommended Policy)
-    const fluctuatedTargetBacs = new Set(
-      filteredData.filter(d => d.target_visits !== d.recommended_visits).map(d => d.bac_name)
-    ).size;
-
-    // 2. Aggregate Chart Data based on Toggle
-    const grouped = filteredData.reduce((acc: any, curr) => {
-      const key = curr[summaryXAxis];
-      if (!acc[key]) {
-        acc[key] = { name: key, actual: 0, target: 0, recommended: 0 };
+        const response = await fetch(`http://localhost:3000/api/v1/dashboard/summary?${params.toString()}`);
+        
+        if (!response.ok) throw new Error('Failed to fetch summary data');
+        
+        const result = await response.json();
+        setSummaryData(result.data);
+      } catch (err) {
+        console.error('Summary fetch error:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-      acc[key].actual += curr.actual_visits;
-      acc[key].target += curr.target_visits;
-      acc[key].recommended += curr.recommended_visits;
-      return acc;
-    }, {});
-
-    const chartArray = Object.values(grouped);
-
-    // Sort months chronologically for the academic cycle
-    if (summaryXAxis === 'month') {
-      const monthOrder = ['April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March'];
-      chartArray.sort((a: any, b: any) => monthOrder.indexOf(a.name) - monthOrder.indexOf(b.name));
-    }
-
-    return {
-      missedTargetBacs,
-      fluctuatedTargetBacs,
-      actualAchievement: totalTarget > 0 ? (totalActual / totalTarget) * 100 : 0,
-      targetVsPolicy: totalRecommended > 0 ? (totalTarget / totalRecommended) * 100 : 0,
-      chartArray
     };
-  }, [filteredData, summaryXAxis]);
+
+    fetchSummaryData();
+  }, [filters]);
+
+  // Fetch chronic performers when performance tab is active
+  useEffect(() => {
+    if (activeTab !== 'performance') return;
+
+    const fetchChronicPerformers = async () => {
+      try {
+        const params = new URLSearchParams();
+        
+        if (filters.state && filters.state !== 'All') params.append('state', filters.state);
+        if (filters.district && filters.district !== 'All') params.append('district', filters.district);
+        if (filters.block && filters.block !== 'All') params.append('block', filters.block);
+        params.append('threshold', thresholds.chronicPerformance);
+
+        const response = await fetch(`http://localhost:3000/api/v1/dashboard/chronic-performers?${params.toString()}`);
+        
+        if (!response.ok) throw new Error('Failed to fetch chronic performers');
+        
+        const result = await response.json();
+        setChronicPerformers(result.data);
+      } catch (err) {
+        console.error('Chronic performers fetch error:', err);
+      }
+    };
+
+    fetchChronicPerformers();
+  }, [activeTab, filters, thresholds.chronicPerformance]);
+
+  // Fetch chronic planners when planning tab is active
+  useEffect(() => {
+    if (activeTab !== 'planning') return;
+
+    const fetchChronicPlanners = async () => {
+      try {
+        const params = new URLSearchParams();
+        
+        if (filters.state && filters.state !== 'All') params.append('state', filters.state);
+        if (filters.district && filters.district !== 'All') params.append('district', filters.district);
+        if (filters.block && filters.block !== 'All') params.append('block', filters.block);
+        params.append('threshold', thresholds.chronicPlanning);
+
+        const response = await fetch(`http://localhost:3000/api/v1/dashboard/chronic-planners?${params.toString()}`);
+        
+        if (!response.ok) throw new Error('Failed to fetch chronic planners');
+        
+        const result = await response.json();
+        setChronicPlanners(result.data);
+      } catch (err) {
+        console.error('Chronic planners fetch error:', err);
+      }
+    };
+
+    fetchChronicPlanners();
+  }, [activeTab, filters, thresholds.chronicPlanning]);
+
+  // Process chart data based on toggle (monthly/yearly)
+  const chartData = useMemo(() => {
+    if (!summaryData) return [];
+    return summaryXAxis === 'month' 
+      ? summaryData.charts.monthly 
+      : summaryData.charts.yearly;
+  }, [summaryData, summaryXAxis]);
+
+  // Calculate monthly achievement for velocity curve
+  const velocityData = useMemo(() => {
+    if (!summaryData?.charts.monthly) return [];
+    return summaryData.charts.monthly.map(item => ({
+      month: item.month,
+      value: item.target > 0 ? (item.actual / item.target) * 100 : 0
+    }));
+  }, [summaryData]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-3 text-muted-foreground">Loading metrics...</span>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <AlertCircle className="w-8 h-8 text-destructive mr-3" />
+        <span className="text-destructive">Error: {error}</span>
+      </div>
+    );
+  }
+
+  // No data state
+  if (!summaryData) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">No data available</p>
+      </div>
+    );
+  }
 
   const pieColors = ['hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))'];
 
   return (
-    <Tabs defaultValue="summary" className="space-y-6 animate-fade-in">
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between border-b pb-2">
         <TabsList className="bg-muted/50 p-1">
           <TabsTrigger value="summary">Summary Report</TabsTrigger>
@@ -95,17 +185,44 @@ export default function VisitReportTab() {
           </Button>
         </div>
 
+        {/* KPI Cards - Data from Backend */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard label="BACs Missed Target" value={summaryData.missedTargetBacs} icon="UserX" color="destructive" />
-          <KPICard label="Actual Achievement %" value={summaryData.actualAchievement} format="percent" icon="Target" color="success" />
-          <KPICard label="Fluctuating Targets" value={summaryData.fluctuatedTargetBacs} icon="Shuffle" color="warning" />
-          <KPICard label="Planning Achievement %" value={summaryData.targetVsPolicy} format="percent" icon="FileText" color="info" />
+          <KPICard 
+            label="BACs Missed Target" 
+            value={summaryData.kpis.missedTargetBacs} 
+            icon="UserX" 
+            color="destructive" 
+          />
+          <KPICard 
+            label="Actual Achievement %" 
+            value={summaryData.kpis.actualAchievement} 
+            format="percent" 
+            icon="Target" 
+            color="success" 
+          />
+          <KPICard 
+            label="Fluctuating Targets" 
+            value={summaryData.kpis.fluctuatedTargetBacs} 
+            icon="Shuffle" 
+            color="warning" 
+          />
+          <KPICard 
+            label="Planning Achievement %" 
+            value={summaryData.kpis.targetVsPolicy} 
+            format="percent" 
+            icon="FileText" 
+            color="info" 
+          />
         </div>
 
-        <ChartContainer title="Adherence Velocity Curve" description="Long-term achievement trend based on statistical execution.">
+        {/* Velocity Curve */}
+        <ChartContainer 
+          title="Adherence Velocity Curve" 
+          description="Long-term achievement trend based on statistical execution."
+        >
           <div className="h-[300px] w-full mt-4">
             <ResponsiveContainer>
-              <AreaChart data={perfMetrics.monthlyAchievement}>
+              <AreaChart data={velocityData}>
                 <defs>
                   <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
@@ -128,20 +245,22 @@ export default function VisitReportTab() {
           </div>
         </ChartContainer>
 
+        {/* Toggle View */}
         <div className="flex justify-end items-center gap-3">
           <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Toggle View:</span>
-          <ToggleGroup type="single" value={summaryXAxis} onValueChange={(v) => v && setSummaryXAxis(v as any)}>
+          <ToggleGroup type="single" value={summaryXAxis} onValueChange={(v) => v && setSummaryXAxis(v)}>
             <ToggleGroupItem value="academic_year" className="text-xs h-8 px-3">Yearly</ToggleGroupItem>
             <ToggleGroupItem value="month" className="text-xs h-8 px-3">Monthly</ToggleGroupItem>
           </ToggleGroup>
         </div>
 
+        {/* Main Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ChartContainer title="Execution Analysis" description="Actual Visits vs. Targets.">
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={summaryData.chartArray}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                <XAxis dataKey="name" tick={{fontSize: 11}} />
+                <XAxis dataKey={summaryXAxis === 'month' ? 'month' : 'year'} tick={{fontSize: 11}} />
                 <YAxis tick={{fontSize: 11}} />
                 <Tooltip />
                 <Legend iconType="circle" wrapperStyle={{fontSize: '12px', paddingTop: '10px'}} />
@@ -153,9 +272,9 @@ export default function VisitReportTab() {
 
           <ChartContainer title="Planning Compliance" description="Target vs Recommended visits.">
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={summaryData.chartArray}>
+              <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
-                <XAxis dataKey="name" tick={{fontSize: 11}} />
+                <XAxis dataKey={summaryXAxis === 'month' ? 'month' : 'year'} tick={{fontSize: 11}} />
                 <YAxis tick={{fontSize: 11}} />
                 <Tooltip />
                 <Legend iconType="circle" wrapperStyle={{fontSize: '12px', paddingTop: '10px'}} />
@@ -166,7 +285,7 @@ export default function VisitReportTab() {
           </ChartContainer>
         </div>
 
-        {/* AI Insight Structure */}
+        {/* AI Insights */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t">
           <div className="space-y-4">
             <h3 className="text-lg font-bold flex items-center gap-2">
@@ -174,7 +293,7 @@ export default function VisitReportTab() {
             </h3>
             <div className="p-4 bg-success/5 border border-success/10 rounded-xl">
               <p className="text-sm leading-relaxed text-muted-foreground italic">
-                Field execution efficiency has reached an aggregate of <strong>{summaryData.actualAchievement.toFixed(1)}%</strong>. 
+                Field execution efficiency has reached an aggregate of <strong>{summaryData.kpis.actualAchievement}%</strong>. 
                 Engagement trends indicate high stability in the primary state hubs.
               </p>
             </div>
@@ -185,8 +304,8 @@ export default function VisitReportTab() {
             </h3>
             <div className="p-4 bg-destructive/5 border border-destructive/10 rounded-xl">
               <p className="text-sm leading-relaxed text-muted-foreground italic">
-                A cumulative gap of <strong>{planMetrics.totalGap}</strong> visits detected. 
-                <strong> {planMetrics.chronicPlanners.length}</strong> BACs identified as chronic under-planners requiring immediate review.
+                A cumulative gap of <strong>{summaryData.kpis.totalGap}</strong> visits detected. 
+                <strong> {summaryData.kpis.chronicUnderplanners}</strong> BACs identified as chronic under-planners requiring immediate review.
               </p>
             </div>
           </div>
@@ -206,47 +325,54 @@ export default function VisitReportTab() {
           value={thresholds.chronicPerformance}
           onChange={(v) => dispatch({ type: 'SET_THRESHOLDS', payload: { chronicPerformance: v } })}
         />
+        
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KPICard label="Chronic Under-performers" value={perfMetrics.chronicPerformers.length} icon="Activity" color="destructive" />
-          <KPICard label="Avg Achievement" value={perfMetrics.avgAchievement} format="percent" icon="Target" color="success" />
-          <KPICard label="Total BACs" value={perfMetrics.totalBACs} icon="Users" color="info" />
-          <KPICard label="Total Visits" value={perfMetrics.totalVisits} icon="Eye" color="default" />
+          <KPICard label="Chronic Under-performers" value={summaryData.kpis.chronicUnderperformers} icon="Activity" color="destructive" />
+          <KPICard label="Avg Achievement" value={summaryData.kpis.avgAchievement} format="percent" icon="Target" color="success" />
+          <KPICard label="Total BACs" value={summaryData.kpis.totalBacs} icon="Users" color="info" />
+          <KPICard label="Total Visits" value={summaryData.kpis.totalVisits} icon="Eye" color="default" />
         </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartContainer title="Monthly Missed Targets">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={perfMetrics.monthlyMissedTargets}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
           <ChartContainer title="Achievement Distribution">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie data={perfMetrics.achievementDistribution} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" nameKey="name" label>
-                  {perfMetrics.achievementDistribution.map((_, i) => <Cell key={i} fill={pieColors[i]} />)}
+                <Pie 
+                  data={summaryData.charts.performanceDistribution} 
+                  cx="50%" 
+                  cy="50%" 
+                  innerRadius={60} 
+                  outerRadius={90} 
+                  dataKey="value" 
+                  nameKey="name" 
+                  label
+                >
+                  {summaryData.charts.performanceDistribution.map((_, i) => (
+                    <Cell key={i} fill={pieColors[i]} />
+                  ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
           </ChartContainer>
+
+          <ChartContainer title="Chronic Under-performers List" description={`${chronicPerformers.length} BACs identified`}>
+            <div className="max-h-[250px] overflow-y-auto space-y-2">
+              {chronicPerformers.slice(0, 10).map((bac, idx) => (
+                <div key={idx} className="flex justify-between items-center p-2 border rounded text-sm">
+                  <div>
+                    <span className="font-semibold">{bac.bac_name}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{bac.district}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold">{bac.avg_achievement}%</div>
+                    <div className="text-xs text-muted-foreground">{bac.months_missed} months</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ChartContainer>
         </div>
-        <ChartContainer title="Monthly Achievement Trend">
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={perfMetrics.monthlyAchievement}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis domain={[0, 120]} />
-              <ReferenceLine y={100} stroke="hsl(var(--success))" strokeDasharray="5 5" />
-              <Tooltip />
-              <Line type="monotone" dataKey="value" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </ChartContainer>
       </TabsContent>
 
       {/* ================= PLANNING SUB-TAB ================= */}
@@ -256,47 +382,54 @@ export default function VisitReportTab() {
           value={thresholds.chronicPlanning}
           onChange={(v) => dispatch({ type: 'SET_THRESHOLDS', payload: { chronicPlanning: v } })}
         />
+        
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <KPICard label="Chronic Under-planners" value={planMetrics.chronicPlanners.length} icon="Activity" color="destructive" />
-          <KPICard label="Avg Planning %" value={planMetrics.avgPlanning} format="percent" icon="Target" color="warning" />
-          <KPICard label="Total Gap" value={planMetrics.totalGap} icon="TrendingUp" color="warning" />
-          <KPICard label="Records" value={planMetrics.totalRecords} icon="BarChart3" color="info" />
+          <KPICard label="Chronic Under-planners" value={summaryData.kpis.chronicUnderplanners} icon="Activity" color="destructive" />
+          <KPICard label="Avg Planning %" value={summaryData.kpis.avgPlanning} format="percent" icon="Target" color="warning" />
+          <KPICard label="Total Gap" value={summaryData.kpis.totalGap} icon="TrendingUp" color="warning" />
+          <KPICard label="Total BACs" value={summaryData.kpis.totalBacs} icon="BarChart3" color="info" />
         </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <ChartContainer title="Monthly Under-planned">
-            <ResponsiveContainer width="100%" height={250}>
-              <BarChart data={planMetrics.monthlyUnderplanned}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="value" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-          <ChartContainer title="Planning Status Distribution">
+          <ChartContainer title="Planning Distribution">
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
-                <Pie data={planMetrics.planningDistribution} cx="50%" cy="50%" innerRadius={60} outerRadius={90} dataKey="value" nameKey="name" label>
-                  {planMetrics.planningDistribution.map((_, i) => <Cell key={i} fill={pieColors[i]} />)}
+                <Pie 
+                  data={summaryData.charts.planningDistribution} 
+                  cx="50%" 
+                  cy="50%" 
+                  innerRadius={60} 
+                  outerRadius={90} 
+                  dataKey="value" 
+                  nameKey="name" 
+                  label
+                >
+                  {summaryData.charts.planningDistribution.map((_, i) => (
+                    <Cell key={i} fill={pieColors[i]} />
+                  ))}
                 </Pie>
                 <Tooltip />
               </PieChart>
             </ResponsiveContainer>
           </ChartContainer>
+
+          <ChartContainer title="Chronic Under-planners List" description={`${chronicPlanners.length} BACs identified`}>
+            <div className="max-h-[250px] overflow-y-auto space-y-2">
+              {chronicPlanners.slice(0, 10).map((bac, idx) => (
+                <div key={idx} className="flex justify-between items-center p-2 border rounded text-sm">
+                  <div>
+                    <span className="font-semibold">{bac.bac_name}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{bac.district}</span>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold">{bac.avg_planning}%</div>
+                    <div className="text-xs text-muted-foreground">Gap: {bac.planning_gap}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ChartContainer>
         </div>
-        <ChartContainer title="Planning Compliance Trend">
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={planMetrics.monthlyPlanningCompliance}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-              <YAxis domain={[0, 120]} tick={{ fontSize: 11 }} />
-              <ReferenceLine y={100} stroke="hsl(var(--success))" strokeDasharray="5 5" />
-              <Tooltip />
-              <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartContainer>
       </TabsContent>
     </Tabs>
   );
