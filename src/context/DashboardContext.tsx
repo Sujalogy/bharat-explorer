@@ -112,7 +112,8 @@ const initialState: DashboardState = {
     district: 'All',
     block: 'All',
     bacId: 'All BACs',
-    visitType: 'All' // NEW
+    visitType: 'All', // NEW
+    month: 'All' // NEW
   },
   thresholds: { chronicPerformance: 3, chronicPlanning: 3 },
   mapState: {
@@ -240,7 +241,7 @@ interface DashboardContextValue {
     states: string[];
     districts: string[];
     blocks: string[];
-    months?: string[];
+    month: string[];
   };
 }
 
@@ -353,6 +354,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       states: getUniqueValues(state.rawData, 'state'),
       districts: getUniqueValues(stateFiltered, 'district'),
       blocks: getUniqueValues(districtFiltered, 'block'),
+      month: getUniqueValues(state.rawData, 'month'),
     };
 
     return filters;

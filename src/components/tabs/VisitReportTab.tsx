@@ -37,6 +37,7 @@ export default function VisitReportTab() {
         const params = new URLSearchParams();
         
         if (filters.state && filters.state !== 'All') params.append('state', filters.state);
+        if (filters.month && filters.month !== 'All') params.append('month', filters.month);
         if (filters.district && filters.district !== 'All') params.append('district', filters.district);
         if (filters.block && filters.block !== 'All') params.append('block', filters.block);
         if (filters.academicYear && filters.academicYear !== 'All') params.append('year', filters.academicYear);
