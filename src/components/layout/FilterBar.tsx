@@ -16,7 +16,6 @@ import { Input } from '@/components/ui/input';
 export default function FilterBar() {
   const { state, dispatch, availableFilters } = useDashboard();
   const { filters } = state;
-console.log(filters)
   const activeFilterCount = [
     filters.academicYear !== 'All',
     filters.state !== 'All',
@@ -39,7 +38,6 @@ console.log(filters)
   ];
 
   // ✅ NEW: Sort available months by academic year order
-  console.log('Available Months before sorting:', availableFilters);
   const sortedMonths = availableFilters.month?.sort((a, b) => {
     return monthOrder.indexOf(a) - monthOrder.indexOf(b);
   }) || [];

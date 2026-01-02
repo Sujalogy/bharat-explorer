@@ -53,7 +53,6 @@ export default function OverviewTab() {
     const level = mapState.currentLevel;
     let name = "India";
     let data = rawData;
-
     if (level === 'state' && mapState.selectedState) {
       name = mapState.selectedState;
       data = rawData.filter(d => d.state?.toLowerCase() === name.toLowerCase());
@@ -84,7 +83,6 @@ export default function OverviewTab() {
         bacMonthTargets.set(key, r.target_visits || 0);
       }
     });
-    console.log(bacMonthTargets)
     // Sum all unique BAC-month targets
     const target = Array.from(bacMonthTargets.values()).reduce((sum, val) => sum + val, 0);
     
@@ -96,21 +94,30 @@ export default function OverviewTab() {
 
     const practiceCounts = {
       ss2: 0, ss3: 0,
-      pp1: 0, pp2: 0, pp3: 0, pp4: 0,
-      gp1: 0, gp2: 0, gp3: 0
+      pp_lit_1: 0, pp_lit_2: 0, pp_lit_3: 0, pp_lit_4: 0,
+      pp_num_1: 0, pp_num_2: 0, pp_num_3: 0, pp_num_4: 0,
+      gp_num_1: 0, gp_num_2: 0, gp_num_3: 0,
+      gp_lit_1: 0, gp_lit_2: 0, gp_lit_3: 0
     };
 
     data.forEach(r => {
       if (r.ssi2_effective) practiceCounts.ss2++;
       if (r.ssi3_effective) practiceCounts.ss3++;
       if (r.practices) {
-        if (r.practices.pp1) practiceCounts.pp1++;
-        if (r.practices.pp2) practiceCounts.pp2++;
-        if (r.practices.pp3) practiceCounts.pp3++;
-        if (r.practices.pp4) practiceCounts.pp4++;
-        if (r.practices.gp1) practiceCounts.gp1++;
-        if (r.practices.gp2) practiceCounts.gp2++;
-        if (r.practices.gp3) practiceCounts.gp3++;
+        if (r.practices.pp_lit_1) practiceCounts.pp_lit_1++;
+        if (r.practices.pp_lit_2) practiceCounts.pp_lit_2++;
+        if (r.practices.pp_lit_3) practiceCounts.pp_lit_3++;
+        if (r.practices.pp_lit_4) practiceCounts.pp_lit_4++;
+        if (r.practices.pp_num_1) practiceCounts.pp_num_1++;
+        if (r.practices.pp_num_2) practiceCounts.pp_num_2++;
+        if (r.practices.pp_num_3) practiceCounts.pp_num_3++;
+        if (r.practices.pp_num_4) practiceCounts.pp_num_4++;
+        if (r.practices.gp_num_1) practiceCounts.gp_num_1++;
+        if (r.practices.gp_num_2) practiceCounts.gp_num_2++;
+        if (r.practices.gp_num_3) practiceCounts.gp_num_3++;
+        if (r.practices.gp_lit_1) practiceCounts.gp_lit_1++;
+        if (r.practices.gp_lit_2) practiceCounts.gp_lit_2++;
+        if (r.practices.gp_lit_3) practiceCounts.gp_lit_3++;
       }
     });
 
@@ -125,13 +132,20 @@ export default function OverviewTab() {
       practices: {
         ss2: getPerc(practiceCounts.ss2),
         ss3: getPerc(practiceCounts.ss3),
-        pp1: getPerc(practiceCounts.pp1),
-        pp2: getPerc(practiceCounts.pp2),
-        pp3: getPerc(practiceCounts.pp3),
-        pp4: getPerc(practiceCounts.pp4),
-        gp1: getPerc(practiceCounts.gp1),
-        gp2: getPerc(practiceCounts.gp2),
-        gp3: getPerc(practiceCounts.gp3),
+        pp_lit_1: getPerc(practiceCounts.pp_lit_1),
+        pp_lit_2: getPerc(practiceCounts.pp_lit_2),
+        pp_lit_3: getPerc(practiceCounts.pp_lit_3),
+        pp_lit_4: getPerc(practiceCounts.pp_lit_4),
+        pp_num_1: getPerc(practiceCounts.pp_num_1),
+        pp_num_2: getPerc(practiceCounts.pp_num_2),
+        pp_num_3: getPerc(practiceCounts.pp_num_3),
+        pp_num_4: getPerc(practiceCounts.pp_num_4),
+        gp_lit_1: getPerc(practiceCounts.gp_lit_1),
+        gp_lit_2: getPerc(practiceCounts.gp_lit_2),
+        gp_lit_3: getPerc(practiceCounts.gp_lit_3),
+        gp_num_1: getPerc(practiceCounts.gp_num_1),
+        gp_num_2: getPerc(practiceCounts.gp_num_2),
+        gp_num_3: getPerc(practiceCounts.gp_num_3),
       }
     };
   }, [rawData, mapState]);

@@ -2,7 +2,6 @@
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useDashboard } from "@/context/DashboardContext";
 import LoadingErrorState from "@/components/shared/LoadingErrorState";
-import HomeTab from "@/components/tabs/HomeTab";
 import OverviewTab from "@/components/tabs/OverviewTab";
 import VisitReportTab from "@/components/tabs/VisitReportTab";
 import CROTab from "@/components/tabs/CROTab";
@@ -20,8 +19,6 @@ export default function Index() {
 
   const renderActiveTab = () => {
     switch (state.activeTab) {
-      case 'home': 
-        return <HomeTab />;
       case 'overview': 
         return <OverviewTab />;
       case 'visit-reports': 
@@ -37,7 +34,7 @@ export default function Index() {
       case 'teacher-profile': 
         return <TeacherProfilingTab />;
       default: 
-        return <HomeTab />;
+        return <OverviewTab />;
     }
   };
 

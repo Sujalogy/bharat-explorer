@@ -21,13 +21,20 @@ interface OverviewSidebarProps {
     practices: {
       ss2: number;
       ss3: number;
-      pp1: number;
-      pp2: number;
-      pp3: number;
-      pp4: number;
-      gp1: number;
-      gp2: number;
-      gp3: number;
+      pp_lit_1: number;
+      pp_lit_2: number;
+      pp_lit_3: number;
+      pp_lit_4: number;
+      pp_num_1: number;
+      pp_num_2: number;
+      pp_num_3: number;
+      pp_num_4: number;
+      gp_lit_1: number;
+      gp_lit_2: number;
+      gp_lit_3: number;
+      gp_num_1: number;
+      gp_num_2: number;
+      gp_num_3: number;
     };
   };
 }
@@ -66,6 +73,7 @@ const PracticeBox = ({ label, value }: { label: string; value: number }) => (
 );
 
 export default function OverviewSidebar({ activeContext, currentFocus }: OverviewSidebarProps) {
+  console.log(currentFocus);
   return (
     <Card className="flex-1 overflow-hidden flex flex-col shadow-lg border-muted/40">
       <CardHeader className="py-4 border-b bg-slate-50">
@@ -147,7 +155,7 @@ export default function OverviewSidebar({ activeContext, currentFocus }: Overvie
                 <MiniScoreCard label="SS3 Effective" value={currentFocus.practices.ss3} />
               </div>
               <div className="grid grid-cols-4 gap-1.5">
-                {['pp1', 'pp2', 'pp3', 'pp4', 'gp1', 'gp2', 'gp3'].map(p => (
+                {['pp_lit_1','pp_lit_2','pp_lit_3','pp_lit_4','pp_num_1','pp_num_2','pp_num_3','pp_num_4','gp_lit_1','gp_lit_2','gp_lit_3','gp_num_1','gp_num_2','gp_num_3'].map(p => (
                   <PracticeBox 
                     key={p} 
                     label={p.toUpperCase()} 

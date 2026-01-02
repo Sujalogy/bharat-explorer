@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { id: 'home', label: 'Home', icon: Home },
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'visit-reports', label: 'Visit Reports', icon: FileText },
   { id: 'cro', label: 'CRO Monitoring', icon: BarChart3 },
