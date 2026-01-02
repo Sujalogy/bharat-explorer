@@ -1,3 +1,5 @@
+// src/components/tabs/OverviewTab.tsx - FIXED TARGET CALCULATION
+
 import { useMemo, useState, useEffect } from 'react';
 import { useDashboard } from '@/context/DashboardContext';
 import IndiaMap from '@/components/map/IndiaMap';
@@ -67,12 +69,24 @@ export default function OverviewTab() {
     const schoolsCovered = new Set(data.map(r => r.school_id)).size;
     const geo = getGeoMetrics(name);
 
-    // UPDATED: Count unique visit days instead of summing
+    // ✅ FIXED: Count unique visit days instead of summing rows
     const uniqueVisitDays = new Set(data.map(r => r.visit_date)).size;
-    const actual = uniqueVisitDays; // Each unique date = 1 visit day
+    const actual = uniqueVisitDays;
     
-    // Target is what BAC set for themselves
-    const target = data.reduce((s, r) => s + (r.target_visits || 0), 0);
+    // ✅ FIXED: Calculate target by summing unique BAC-Month combinations
+    // Group by BAC and Month, then sum the target for each unique combination
+    const bacMonthTargets = new Map<string, number>();
+    
+    data.forEach(r => {
+      const key = `${r.bac_name}-${r.month}`;
+      if (!bacMonthTargets.has(key)) {
+        // Only count this BAC-month's target once
+        bacMonthTargets.set(key, r.target_visits || 0);
+      }
+    });
+    console.log(bacMonthTargets)
+    // Sum all unique BAC-month targets
+    const target = Array.from(bacMonthTargets.values()).reduce((sum, val) => sum + val, 0);
     
     // Classroom observations count
     const obs = data.reduce((s, r) => s + (r.classroom_obs || 0), 0);
@@ -200,7 +214,7 @@ export default function OverviewTab() {
         </ChartContainer>
       </div>
 
-      {/* 30% DYNAMIC SIDE CARD - Now using the separated component */}
+      {/* 30% DYNAMIC SIDE CARD */}
       <div className="lg:w-[30%] flex flex-col min-h-0">
         <OverviewSidebar activeContext={activeContext} currentFocus={currentFocus} />
       </div>

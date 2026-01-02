@@ -147,7 +147,7 @@ export default function OverviewSidebar({ activeContext, currentFocus }: Overvie
                 <MiniScoreCard label="SS3 Effective" value={currentFocus.practices.ss3} />
               </div>
               <div className="grid grid-cols-4 gap-1.5">
-                {['pp1', 'pp2', 'pp3', 'pp4'].map(p => (
+                {['pp1', 'pp2', 'pp3', 'pp4', 'gp1', 'gp2', 'gp3'].map(p => (
                   <PracticeBox 
                     key={p} 
                     label={p.toUpperCase()} 
